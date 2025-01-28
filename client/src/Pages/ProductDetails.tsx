@@ -34,20 +34,28 @@ export function ProductDetails() {
   // if (!product) console.error('Error fetching product details');
 
   return (
-    <div>
+    <div style={{ fontFamily: 'Nova Round' }} className="mx-3">
       {product && (
         <div>
-          <h2>{product.productName}</h2>
+          <h2 className="align-center justify-self-center text-xl">
+            {product.productName}
+          </h2>
           <img
+            className="justify-self-center"
             src={product.imageUrl}
             alt={product.productName}
             style={{ width: '300px' }}
           />
-          <p>{product.description}</p>
-          <p>Price: ${product.price}</p>
+          <p className="justify-self-center mx-5">{product.description}</p>
+          <br></br>
+          <p className="font-semibold justify-self-center">
+            Price: ${product.price}
+          </p>
+          <br></br>
           <button
             // onClick={handleAddToCart}
-            className="border border-gray-300 rounded py-1 px-3 mx-10">
+            style={{ backgroundColor: '#eaf585' }}
+            className="flex justify-items-center justify-self-center border border-gray-300 rounded py-1 px-3 mx-10 mb-5">
             Add to Cart
           </button>
         </div>

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import productsImage from '../assets/productsImage.png';
 import { Link, useNavigate } from 'react-router-dom';
 // import { ProductDetails } from './ProductDetails';
+import { Header } from '../components/Header';
 
 export type Product = {
   productId: number;
@@ -41,11 +42,19 @@ export function ProductsPage() {
   return (
     <div>
       <div>
-        <img src={productsImage} />
-        <h2 className="justify-self-center p-2.5 text-lg">BEST SELLERS</h2>
+        <img
+          className="rounded-md mx-3"
+          style={{ width: '95%' }}
+          src={productsImage}
+        />
+        <h2
+          style={{ fontFamily: 'Nova Round' }}
+          className="justify-self-center p-2.5 text-2xl">
+          BEST SELLERS
+        </h2>
       </div>
       <div
-        // className="border-none, flex-wrap, gap-4"
+        className="justify-center"
         style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
         {products.map((product) => (
           <div
@@ -60,10 +69,13 @@ export function ProductsPage() {
             />
             <h3
               // style={{font-sans:'Nova Round'}}
-              className=" font-display ml-4 text-center ">
+              className=" font-display ml-4 text-center "
+              style={{ fontFamily: 'Nova Round' }}>
               {product.productName}
             </h3>
-            <p className="font-semibold justify-self-center ">
+            <p
+              style={{ fontFamily: 'Nova Round' }}
+              className="font-semibold justify-self-center ">
               Price: ${product.price}
             </p>
           </div>
