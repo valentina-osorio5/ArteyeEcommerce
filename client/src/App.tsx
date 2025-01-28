@@ -1,35 +1,30 @@
-import { useEffect, useState } from 'react';
-import reactLogo from './assets/react.svg';
-import viteLogo from '/vite.svg';
-import './App.css';
+// import { useEffect, useState } from 'react';
+import { Routes, Route, Link } from 'react-router-dom';
+import { ProductsPage } from './Pages/ProductsPage';
+// import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 export default function App() {
-  const [serverData, setServerData] = useState('');
-
-  useEffect(() => {
-    async function readServerData() {
-      const resp = await fetch('/api/hello');
-      const data = await resp.json();
-
-      console.log('Data from server:', data);
-
-      setServerData(data.message);
-    }
-
-    readServerData();
-  }, []);
-
   return (
-    <>
+    <div>
       <div>
-        <a href="https://vitejs.dev" target="_blank" rel="noreferrer">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank" rel="noreferrer">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+        <Link
+          className="background-color: #EAF585,
+                  height: 2.5rem,
+                  text-center
+                  justify-center"
+          to="/">
+          ARTEYE
+        </Link>
+        <nav className="float-right" style={{ display: 'flex', gap: '2rem' }}>
+          {/* <FontAwesomeIcon icon=“fa-light fa-cart-shopping” /> */}
+          <Link to="/cart">My Cart</Link>
+          <Link to="/sign-in">Sign In</Link>
+        </nav>
       </div>
-      <h1>{serverData}</h1>
-    </>
+
+      <Routes>
+        <Route path="/" element={<ProductsPage />} />
+      </Routes>
+    </div>
   );
 }
