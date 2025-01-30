@@ -1,20 +1,23 @@
 import { Link } from 'react-router-dom';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState, useContext } from 'react';
 import { Product } from './ProductsPage';
 import { useParams } from 'react-router-dom';
+import { ShoppingCartContext } from '../components/ShoppingCartContext';
 
 export function ProductDetails() {
   const { productId } = useParams<{ productId: string }>();
   const [product, setProduct] = useState<any>(null);
-  console.log(product, productId);
+  const { addToCart } = useContext(ShoppingCartContext);
+  console.log(addToCart);
+  // console.log(product, productId);
 
   useEffect(() => {
-    console.log('useEffect fired');
+    // console.log('useEffect fired');
     async function fetchProduct() {
-      console.log('fetch product fired');
+      // console.log('fetch product fired');
       try {
         const res = await fetch(`/api/shop/${productId}`);
-        console.log(res);
+        // console.log(res);
         if (!res.ok) {
           console.error('Failed to fetch product');
           return;
@@ -30,6 +33,11 @@ export function ProductDetails() {
     fetchProduct();
     // }
   }, [productId]);
+
+  function handleAddToCart() {
+    if (!product) throw new Error('something went wrong...');
+    addToCart(product);
+  }
 
   // if (!product) console.error('Error fetching product details');
 
@@ -53,7 +61,7 @@ export function ProductDetails() {
           </p>
           <br></br>
           <button
-            // onClick={handleAddToCart}
+            onClick={handleAddToCart}
             style={{ backgroundColor: '#eaf585' }}
             className="flex justify-items-center justify-self-center border border-gray-300 rounded py-1 px-3 mx-10 mb-5">
             Add to Cart
@@ -64,39 +72,43 @@ export function ProductDetails() {
   );
 }
 
-// export function ProductDetails({ product }: Product) {
+type Cart = {
+  cartId: number;
+  productId: number;
+  quantity: number;
+};
+
+// export function fetchCart() {
+//   const { cartId } = useParams<{ cartId: string }>();
+//   const [cart, setCart] = useState<any>(null);
+//   console.log(`add to cart fired`);
+
+//   useEffect(() => {
+//     // console.log('useEffect fired');
+//     async function fetchCart() {
+//       // console.log('fetch product fired');
+//       try {
+//         const res = await fetch(`/api/shop/cart/${cartId}`);
+//         // console.log(res);
+//         if (!res.ok) {
+//           console.error('Failed to fetch cart');
+//           return;
+//         }
+//         const data = await res.json();
+//         setCart(data);
+//       } catch (error) {
+//         console.error('Error fetching cart details:', error);
+//       }
+//     }
+
+//     // if (productId) {
+//     fetchCart();
+//     // }
+//   }, [cartId]);
+
 //   return (
-//     <div>
-//       <div>
-//         <Link
-//           className="background-color: #EAF585,
-//                   height: 2.5rem,
-//                   text-center
-//                   justify-center"
-//           to="/">
-//           ARTEYE
-//         </Link>
-//         <nav className="float-right" style={{ display: 'flex', gap: '2rem' }}>
-//           {/* <FontAwesomeIcon icon=“fa-light fa-cart-shopping” /> */}
-//           <Link to="/cart">My Cart</Link>
-//           <Link to="/sign-in">Sign In</Link>
-//         </nav>
-//       </div>
-//       <div key={product.productId} style={{ width: '200px' }}>
-//         <img
-//           src={product.imageUrl}
-//           alt={product.productName}
-//           style={{ width: '100%' }}
-//         />
-//         <h3
-//           // style={{font-sans:'Nova Round'}}
-//           className=" font-display ml-4 text-center ">
-//           {product.productName}
-//         </h3>
-//         <p className="font-semibold justify-self-center ">
-//           Price: ${product.price}
-//         </p>
-//       </div>
-//     </div>
+//     {cart &&
+
+//     }
 //   );
 // }

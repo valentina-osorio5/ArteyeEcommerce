@@ -3,6 +3,8 @@ import 'dotenv/config';
 import express from 'express';
 import pg from 'pg';
 import { ClientError, errorMiddleware, authMiddleware } from './lib/index.js';
+import { nextTick } from 'process';
+import { redirect } from 'react-router-dom';
 // import argon2, { hash } from 'argon2';
 // import jwt from 'jsonwebtoken';
 
@@ -104,8 +106,37 @@ app.get('/api/shop/:productId', async (req, res, next) => {
   }
 });
 
+app.get('/api/shop/cart/:cartId', async (req, res, next) => {
+  console.log('/api/shop/cart/:cartId hit');
+  try {
+    const cartId = Number(req.params.cartId);
+    console.log(cartId);
+    if (!Number.isInteger(+cartId)) {
+      throw new ClientError(400, `Non-integer cartId: ${cartId}`);
+    }
+
+    const sql = `
+    select *
+    from "cartItems"
+    where "cartId" = $1
+    `;
+
+    const params = [cartId];
+    const result = await db.query(sql, params);
+    console.log(result.rows);
+    const [cart] = result.rows;
+
+    if (!cart) {
+      throw new ClientError(400, `cartId ${cartId} not found`);
+    }
+    res.status(200).json(cart);
+  } catch (err) {
+    next(err);
+  }
+});
+
 app.post('/api/shop/cart/:cartId', async (req, res, next) => {
-  console.log('');
+  console.log('/api/shop/cart/:cartId hit');
   try {
     // Destructure from the request body
     const { cartId } = req.params;
@@ -148,31 +179,55 @@ app.put('/api/shop/cart/:cartId', async (req, res, next) => {
       throw new ClientError(400, `Non-integer cartId: ${cartId}`);
     }
 
-    // I think we need to pulling the productName & photoUrl as well?
+    // I think we need to be pulling the productName & photoUrl as well?
     const { productId, quantity } = req.body;
-    // if (!productId || !Number.isInteger(quantity) || quantity < 1) {
-    //   throw new ClientError(
-    //     400,
-    //     'productId and product quantity must be a positive integer'
-    //   );
-    // }
+    if (!productId || !Number.isInteger(quantity) || quantity < 1) {
+      throw new ClientError(
+        400,
+        'productId and product quantity must be a positive integer'
+      );
+    }
 
     // Insert a new row into cart_items
-    // Do we need to have all values accounted or only the ones that are being updates?
+    // Do we need to have all values accounted or only the ones that are being updated?
     const sql = `
       update "cartItems"
-      set "quantity" = $1,
-      where "cartId"  = $2
+      set "quantity" = $1
+      where "cartId"  = $2 and "productId" = $3
       returning *
     `;
-    const params = [cartId, productId, quantity];
+    const params = [quantity, cartId, productId];
     const result = await db.query(sql, params);
     console.log(result.rows);
     const updatedCart = result.rows[0];
     if (!updatedCart) {
-      throw new ClientError(404, `${cartId} doesn't exist`);
+      throw new ClientError(404, `cartId ${cartId} doesn't exist`);
     }
     res.json(updatedCart);
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.delete('/api/shop/cart/:cartId', async (req, res, next) => {
+  console.log('delete /api/shop/cart/:cartId hit');
+  try {
+    const { cartId } = req.params;
+    if (!Number.isInteger(+cartId)) {
+      throw new ClientError(400, `Non-integer cartId: ${cartId}`);
+    }
+    const sql = `
+  delete from "cartItems" where "cartId" = $1
+  returning *;
+  `;
+    const params = [cartId];
+    const result = await db.query(sql, params);
+    console.log(result.rows);
+    const deleteCart = result.rows[0];
+    if (!deleteCart) {
+      throw new ClientError(404, `cart ${cartId} doesn't exist!`);
+    }
+    res.sendStatus(204);
   } catch (err) {
     next(err);
   }
