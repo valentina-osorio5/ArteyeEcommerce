@@ -135,32 +135,31 @@ app.get('/api/shop/cart/:cartId', async (req, res, next) => {
   }
 });
 
-app.post('/api/shop/cart/:cartId', async (req, res, next) => {
-  console.log('/api/shop/cart/:cartId hit');
+app.post('/api/shop/product/:productId', async (req, res, next) => {
+  console.log('/api/shop/product/:productId hit');
   try {
     // Destructure from the request body
-    const { cartId } = req.params;
-    if (!Number.isInteger(+cartId)) {
-      throw new ClientError(400, `Non-integer cartId: ${cartId}`);
-    }
+    const { productId } = req.params;
+    console.log(productId);
+    // if (!Number.isInteger(+productId)) {
+    //   throw new ClientError(400, `Non-integer cartId: ${productId}`);
+    // }
 
     // I think we need to pulling the productName & photoUrl as well?
-    const { productId, quantity } = req.body;
-    if (!productId || !Number.isInteger(quantity) || quantity < 1) {
-      throw new ClientError(
-        400,
-        'productId and product quantity must be a positive integer'
-      );
+    const { numberOfItems } = req.body;
+    console.log(req.body);
+    if (!Number.isInteger(numberOfItems) || numberOfItems < 1) {
+      throw new ClientError(400, 'product quantity must be a positive integer');
     }
     // might need to add an extra error message for description?
 
     // Insert a new row into cart_items
     const sql = `
-      insert into "cartItems" ("cartId","productId","quantity")
-      values ($1, $2, $3)
+      insert into "cartItems" ("productId","quantity")
+      values ($1, $2)
       returning *
     `;
-    const params = [cartId, productId, quantity];
+    const params = [productId, numberOfItems];
     const result = await db.query(sql, params);
     const [cartItems] = result.rows;
 

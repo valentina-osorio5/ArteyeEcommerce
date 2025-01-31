@@ -18,10 +18,8 @@ export function Header() {
       </Link>
       <nav className="float-right" style={{ display: 'flex', gap: '2rem' }}>
         <Link to="/cart">
-          <IoCartOutline className="text-2xl" />
-          <span className="absolute top-1 left-8 inline-flex float-right w-5 h-5">
-            {numberOfItems}
-          </span>
+          <IoCartOutline className="text-2xl inline" />
+          <span className="text-sm">{numberOfItems}</span>
         </Link>
         <Link to="/sign-in">Account</Link>
       </nav>
