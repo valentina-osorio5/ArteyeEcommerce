@@ -29,7 +29,7 @@ export function SignUpForm() {
       alert(
         `Successfully registered ${user.username} as userId ${user.userId}.`
       );
-      navigate('/auth/sign-in');
+      navigate('/sign-in');
     } catch (err) {
       alert(`Error registering user: ${err}`);
     }

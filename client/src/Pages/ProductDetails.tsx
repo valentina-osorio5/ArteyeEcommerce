@@ -4,6 +4,7 @@ import { Product } from './ProductsPage';
 import { useParams } from 'react-router-dom';
 import { ShoppingCartContext } from '../components/ShoppingCartContext';
 import { v4 as uuidv4 } from 'uuid';
+import { useUser } from '../components/useUser';
 
 export function ProductDetails() {
   const { productId } = useParams<{ productId: string }>();
@@ -12,6 +13,8 @@ export function ProductDetails() {
   const context = useContext(ShoppingCartContext);
   const numberOfItems = context.cart.length;
   console.log(addToCart);
+  const userContext = useUser();
+  console.log(userContext.user.userId);
   // console.log(product, productId);
 
   useEffect(() => {
@@ -38,10 +41,42 @@ export function ProductDetails() {
   }, [productId]);
 
   function handleAddToCart() {
-    if (!product) throw new Error('something went wrong...');
+    if (!product) throw new Error('Product data missing');
+
+    // Call the context function to update local state (if needed)
     addToCart(product);
-    addNewCart();
+
+    // Now add the item to the cart in the database
+    async function postData() {
+      try {
+        const options = {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          // Send the productId and quantity.
+          // If you need to send a userId, include it here or have it added via authMiddleware on the server.
+          body: JSON.stringify({
+            productId: product.productId,
+            quantity: 1,
+            userId: userContext.user.userId,
+            // or use the value from your context if you allow choosing quantity
+          }),
+        };
+        const res = await fetch('/api/shop/cart', options);
+        if (!res.ok) throw new Error(`Fetch error ${res.status}`);
+        const data = await res.json();
+        console.log('Cart updated:', data);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    postData();
   }
+
+  // function handleAddToCart() {
+  //   if (!product) throw new Error('something went wrong...');
+  //   addToCart(product);
+  //   addNewCart();
+  // }
 
   function addNewCart() {
     // const { cartId } = useParams<{ cartId: string }>();

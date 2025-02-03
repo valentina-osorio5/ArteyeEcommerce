@@ -30,7 +30,7 @@ export function SignIn() {
       handleSignIn(user, token);
       console.log('Signed In', user);
       console.log('Received token:', token);
-      // navigate('/');
+      navigate('/');
     } catch (err) {
       alert(`Error signing in: ${err}`);
     }
@@ -80,7 +80,7 @@ export function SignIn() {
             className=" align-middle underline"
             style={{ color: '#705DCC' }}
             to="/sign-up">
-            Sign up for an account
+            Not registered? Sign up for an account
           </Link>
         </div>
       </form>

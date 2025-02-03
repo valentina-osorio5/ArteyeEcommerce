@@ -130,13 +130,14 @@ app.post('/api/auth/sign-up', async (req, res, next) => {
   }
 });
 
-app.post('api/auth/sign-in', async (req, res, next) => {
-  console.log('api/auth/sign-in hit');
+app.post('/api/auth/sign-in', async (req, res, next) => {
+  console.log('/api/auth/sign-in hit');
   try {
     const { username, password } = req.body as Partial<Auth>;
     if (!username || !password) {
       throw new ClientError(401, 'invalid login');
     }
+    console.log(username, password);
     const sql = `
     select "userId",
            "hashedPassword"
@@ -144,8 +145,10 @@ app.post('api/auth/sign-in', async (req, res, next) => {
     where "username" = $1
     `;
     const params = [username];
+    console.log(params);
     const result = await db.query<User>(sql, params);
     const [user] = result.rows;
+    console.log(result.rows);
     if (!user) {
       throw new ClientError(401, 'invalid login');
     }
@@ -154,6 +157,7 @@ app.post('api/auth/sign-in', async (req, res, next) => {
       throw new ClientError(401, 'invalid login');
     }
     const payload = { userId, username };
+    console.log(payload);
     const token = jwt.sign(payload, hashKey);
     res.json({ token, user: payload });
   } catch (err) {
@@ -189,6 +193,108 @@ app.get('/api/shop/cart/:cartId', async (req, res, next) => {
     next(err);
   }
 });
+
+app.post('/api/shop/cart', async (req, res, next) => {
+  console.log('/api/shop/cart hit');
+  try {
+    const { productId, quantity, userId } = req.body;
+    console.log('post userId', userId);
+    if (!productId || !Number.isInteger(quantity) || quantity < 1) {
+      throw new ClientError(
+        400,
+        'productId must be provided and quantity must be a positive integer'
+      );
+    }
+    // First, see if an entry for this product (for this user) already exists.
+    const checkSql = `
+      SELECT *
+      FROM "cartItems"
+      WHERE "productId" = $1 AND "userId" = $2
+    `;
+    const checkParams = [productId, userId];
+    const checkResult = await db.query(checkSql, checkParams);
+    console.log(checkResult);
+    if (checkResult.rows.length > 0) {
+      // If the product already exists in the cart, update the quantity.
+      const existingItem = checkResult.rows[0];
+      const updateSql = `
+        UPDATE "cartItems"
+        SET "quantity" = "quantity" + $1
+        WHERE "cartId" = $2
+        RETURNING *
+      `;
+      const updateParams = [quantity, existingItem.cartId];
+      const updateResult = await db.query(updateSql, updateParams);
+      return res.status(200).json(updateResult.rows[0]);
+    } else {
+      // Otherwise, insert a new row.
+      const insertSql = `
+        INSERT INTO "cartItems" ("userId", "productId", "quantity")
+        VALUES ($1, $2, $3)
+        RETURNING *
+      `;
+      const insertParams = [userId, productId, quantity];
+      const insertResult = await db.query(insertSql, insertParams);
+      return res.status(201).json(insertResult.rows[0]);
+    }
+  } catch (err) {
+    next(err);
+  }
+});
+
+// creates a unique cart per item
+// app.post('/api/shop/cart', async (req, res, next) => {
+//   console.log('POST /api/shop/cart hit');
+//   try {
+//     // Expect productId and quantity in the body.
+//     const { productId, quantity, userId } = req.body;
+//     // You might get userId from the token via authMiddleware instead.
+//     if (!productId || !Number.isInteger(quantity) || quantity < 1) {
+//       throw new ClientError(
+//         400,
+//         'productId must be provided and quantity must be a positive integer'
+//       );
+//     }
+//     // Optional: check if a cart item for the same product (and same user) already exists.
+//     // If so, update the quantity rather than inserting a new row.
+//     const checkSql = `
+//       SELECT * FROM "cartItems"
+//       WHERE "productId" = $1 ${userId ? 'AND "userId" = $2' : ''}
+//     `;
+//     const checkParams = userId ? [productId, userId] : [productId];
+//     const checkResult = await db.query(checkSql, checkParams);
+
+//     if (checkResult.rows.length > 0) {
+//       // If the item is already in the cart, update the quantity.
+//       const updateSql = `
+//         UPDATE "cartItems"
+//         SET "quantity" = "quantity" + $1
+//         WHERE "cartId" = $2
+//         RETURNING *
+//       `;
+//       const existingCart = checkResult.rows[0];
+//       const updateParams = [quantity, existingCart.cartId];
+//       const updateResult = await db.query(updateSql, updateParams);
+//       return res.status(200).json(updateResult.rows[0]);
+//     } else {
+//       // Otherwise, insert a new cart item.
+//       const insertSql = `
+//         INSERT INTO "cartItems" ("userId", "productId", "quantity")
+//         VALUES ($1, $2, $3)
+//         RETURNING *
+//       `;
+//       const insertParams = [userId || null, productId, quantity];
+//       const insertResult = await db.query(insertSql, insertParams);
+//       return res.status(201).json(insertResult.rows[0]);
+//     }
+//   } catch (err) {
+//     next(err);
+//   }
+// });
+
+// app.post('/api/shop/product/:productId', async (req,res, next) => {
+
+// })
 
 // app.post('/api/shop/product/:productId', async (req, res, next) => {
 //   console.log('/api/shop/product/:productId hit');
@@ -263,93 +369,93 @@ app.get('/api/shop/cart/:cartId', async (req, res, next) => {
 //   }
 // });
 
-app.post('/api/shop/product/:productId', async (req, res, next) => {
-  console.log('/api/shop/product/:productId hit');
-  try {
-    // Destructure from the request body
-    const { productId } = req.params;
-    console.log(productId);
+// app.post('/api/shop/product/:productId', async (req, res, next) => {
+//   console.log('/api/shop/product/:productId hit');
+//   try {
+//     // Destructure from the request body
+//     const { productId } = req.params;
+//     // console.log(productId);
 
-    // Cart ID and product quantity array
-    const { cartId, products } = req.body; // Assuming `products` is an array of { productId, quantity }
+//     // Cart ID and product quantity array
+//     const { cartId, product } = req.body; // Assuming `products` is an array of { productId, quantity }
+//     console.log(product);
+//     if (!Array.isArray(product) || product.length === 0) {
+//       throw new ClientError(
+//         400,
+//         'Products must be an array of objects with productId and quantity.'
+//       );
+//     }
 
-    if (!Array.isArray(products) || products.length === 0) {
-      throw new ClientError(
-        400,
-        'Products must be an array of objects with productId and quantity.'
-      );
-    }
+//     // Validate each product's quantity
+//     product.forEach(({ productId, quantity }) => {
+//       if (!Number.isInteger(quantity) || quantity < 1) {
+//         throw new ClientError(
+//           400,
+//           'Each product quantity must be a positive integer.'
+//         );
+//       }
+//     });
 
-    // Validate each product's quantity
-    products.forEach(({ productId, quantity }) => {
-      if (!Number.isInteger(quantity) || quantity < 1) {
-        throw new ClientError(
-          400,
-          'Each product quantity must be a positive integer.'
-        );
-      }
-    });
+//     if (!cartId) {
+//       // If there's no cartId (new cart), insert new cart items
+//       const sql = `
+//         INSERT INTO "cartItems" ("productId", "quantity")
+//         VALUES ($1, $2)
+//         RETURNING *
+//       `;
+//       const result = [];
 
-    if (!cartId) {
-      // If there's no cartId (new cart), insert new cart items
-      const sql = `
-        INSERT INTO "cartItems" ("productId", "quantity")
-        VALUES ($1, $2)
-        RETURNING *
-      `;
-      const result = [];
+//       // Loop through each product and insert into the cartItems table
+//       for (const { productId, quantity } of products) {
+//         const params = [productId, quantity];
+//         const res = await db.query(sql, params);
+//         result.push(res.rows[0]); // Collect the results for each product added
+//       }
 
-      // Loop through each product and insert into the cartItems table
-      for (const { productId, quantity } of products) {
-        const params = [productId, quantity];
-        const res = await db.query(sql, params);
-        result.push(res.rows[0]); // Collect the results for each product added
-      }
+//       res.status(201).json(result); // Return all the added items in the response
+//     } else {
+//       // If cartId exists (existing cart), update existing products or add new ones
+//       const result = [];
 
-      res.status(201).json(result); // Return all the added items in the response
-    } else {
-      // If cartId exists (existing cart), update existing products or add new ones
-      const result = [];
+//       for (const { productId, quantity } of products) {
+//         // Check if the product is already in the cart
+//         const checkSql = `
+//           SELECT * FROM "cartItems"
+//           WHERE "cartId" = $1 AND "productId" = $2
+//         `;
+//         const checkParams = [cartId, productId];
+//         const checkResult = await db.query(checkSql, checkParams);
 
-      for (const { productId, quantity } of products) {
-        // Check if the product is already in the cart
-        const checkSql = `
-          SELECT * FROM "cartItems"
-          WHERE "cartId" = $1 AND "productId" = $2
-        `;
-        const checkParams = [cartId, productId];
-        const checkResult = await db.query(checkSql, checkParams);
+//         if (checkResult.rows.length > 0) {
+//           // If product exists, update its quantity
+//           const updateSql = `
+//             UPDATE "cartItems"
+//             SET "quantity" = $1
+//             WHERE "cartId" = $2 AND "productId" = $3
+//             RETURNING *
+//           `;
+//           const updateParams = [quantity, cartId, productId];
+//           const updateRes = await db.query(updateSql, updateParams);
+//           result.push(updateRes.rows[0]); // Add the updated product
+//         } else {
+//           // If product doesn't exist in the cart, add it
+//           const insertSql = `
+//             INSERT INTO "cartItems" ("cartId", "productId", "quantity")
+//             VALUES ($1, $2, $3)
+//             RETURNING *
+//           `;
+//           const insertParams = [cartId, productId, quantity];
+//           const insertRes = await db.query(insertSql, insertParams);
+//           result.push(insertRes.rows[0]); // Add the newly inserted product
+//         }
+//       }
 
-        if (checkResult.rows.length > 0) {
-          // If product exists, update its quantity
-          const updateSql = `
-            UPDATE "cartItems"
-            SET "quantity" = $1
-            WHERE "cartId" = $2 AND "productId" = $3
-            RETURNING *
-          `;
-          const updateParams = [quantity, cartId, productId];
-          const updateRes = await db.query(updateSql, updateParams);
-          result.push(updateRes.rows[0]); // Add the updated product
-        } else {
-          // If product doesn't exist in the cart, add it
-          const insertSql = `
-            INSERT INTO "cartItems" ("cartId", "productId", "quantity")
-            VALUES ($1, $2, $3)
-            RETURNING *
-          `;
-          const insertParams = [cartId, productId, quantity];
-          const insertRes = await db.query(insertSql, insertParams);
-          result.push(insertRes.rows[0]); // Add the newly inserted product
-        }
-      }
-
-      res.json(result); // Return all the updated/added products in the cart
-    }
-  } catch (err) {
-    next(err);
-  }
-});
+//       res.json(result); // Return all the updated/added products in the cart
+//     }
+//   } catch (err) {
+//     next(err);
+//   }
+// });
 
 app.put('/api/shop/cart/:cartId', async (req, res, next) => {
   console.log('put route /api/shop/cart/:cartId hit');
