@@ -2,10 +2,12 @@ import { Link, Outlet } from 'react-router-dom';
 import { IoCartOutline } from 'react-icons/io5';
 import { ShoppingCartContext } from './ShoppingCartContext';
 import { useContext } from 'react';
+import { useUser } from './useUser';
 
 export function Header() {
   const context = useContext(ShoppingCartContext);
   const numberOfItems = context.cart.length;
+  const { user, handleSignOut } = useUser();
   console.log('header context', context);
   console.log('number of items', numberOfItems);
 
@@ -21,22 +23,8 @@ export function Header() {
           <IoCartOutline className="text-2xl inline" />
           <span className="text-sm">{numberOfItems}</span>
         </Link>
-        <Link to="/sign-in">Account</Link>
+        <Link to="/sign-in">Sign In</Link>
       </nav>
     </div>
   );
 }
-
-/* <div
-          className="rounded-circle bg-black d-flex justify-content-center align-items-center"
-          style={{
-            color: 'white',
-            width: '1.5rem',
-            height: '1.5rem',
-            position: 'absolute',
-            bottom: 0,
-            right: 0,
-            transform: 'translate(25%, 25%)',
-          }}>
-          3
-        </div> */

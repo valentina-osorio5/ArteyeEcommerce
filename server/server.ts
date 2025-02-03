@@ -5,8 +5,8 @@ import pg from 'pg';
 import { ClientError, errorMiddleware, authMiddleware } from './lib/index.js';
 import { nextTick } from 'process';
 import { redirect } from 'react-router-dom';
-// import argon2, { hash } from 'argon2';
-// import jwt from 'jsonwebtoken';
+import argon2, { hash } from 'argon2';
+import jwt from 'jsonwebtoken';
 
 type User = {
   userId: number;
@@ -19,10 +19,11 @@ type Auth = {
   password: string;
 };
 
+// changed this to a numbers array
 type Cart = {
   cartId: number;
   userId: number;
-  productId: number;
+  productId: number[];
   quantity: number;
 };
 
@@ -44,8 +45,8 @@ const db = new pg.Pool({
 const app = express();
 app.use(express.json());
 
-// const hashKey= process.env.TOKEN_SECRET;
-// if(!hashKey) throw new Error('TOKEN_SECRET not found in .env');
+const hashKey = process.env.TOKEN_SECRET;
+if (!hashKey) throw new Error('TOKEN_SECRET not found in .env');
 
 // Create paths for static directories
 const reactStaticDir = new URL('../client/dist', import.meta.url).pathname;
@@ -54,6 +55,7 @@ const uploadsStaticDir = new URL('public', import.meta.url).pathname;
 app.use(express.static(reactStaticDir));
 // Static directory for file uploads server/public/
 app.use(express.static(uploadsStaticDir));
+app.use(express.json());
 
 app.get('/api/shop', async (req, res, next) => {
   console.log('/api/shop hit');
@@ -106,6 +108,59 @@ app.get('/api/shop/:productId', async (req, res, next) => {
   }
 });
 
+app.post('/api/auth/sign-up', async (req, res, next) => {
+  console.log('/api/auth/sign-up hit');
+  try {
+    const { username, password } = req.body;
+    if (!username || !password) {
+      throw new ClientError(400, 'username and password are required fields');
+    }
+    const hashedPassword = await argon2.hash(password);
+    const sql = `
+      insert into "users" ("username", "hashedPassword")
+      values ($1, $2)
+      returning "userId", "username", "createdAt"
+    `;
+    const params = [username, hashedPassword];
+    const result = await db.query<User>(sql, params);
+    const [user] = result.rows;
+    res.status(201).json(user);
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post('api/auth/sign-in', async (req, res, next) => {
+  console.log('api/auth/sign-in hit');
+  try {
+    const { username, password } = req.body as Partial<Auth>;
+    if (!username || !password) {
+      throw new ClientError(401, 'invalid login');
+    }
+    const sql = `
+    select "userId",
+           "hashedPassword"
+    from "users"
+    where "username" = $1
+    `;
+    const params = [username];
+    const result = await db.query<User>(sql, params);
+    const [user] = result.rows;
+    if (!user) {
+      throw new ClientError(401, 'invalid login');
+    }
+    const { userId, hashedPassword } = user;
+    if (!(await argon2.verify(hashedPassword, password))) {
+      throw new ClientError(401, 'invalid login');
+    }
+    const payload = { userId, username };
+    const token = jwt.sign(payload, hashKey);
+    res.json({ token, user: payload });
+  } catch (err) {
+    next(err);
+  }
+});
+
 app.get('/api/shop/cart/:cartId', async (req, res, next) => {
   console.log('/api/shop/cart/:cartId hit');
   try {
@@ -135,35 +190,162 @@ app.get('/api/shop/cart/:cartId', async (req, res, next) => {
   }
 });
 
+// app.post('/api/shop/product/:productId', async (req, res, next) => {
+//   console.log('/api/shop/product/:productId hit');
+//   try {
+//     // Destructure from the request body
+//     const { productId } = req.params;
+//     console.log(productId);
+//     // if (!Number.isInteger(+productId)) {
+//     //   throw new ClientError(400, `Non-integer cartId: ${productId}`);
+//     // }
+
+//     // I think we need to pulling the productName & photoUrl as well?
+//     const { cartId, numberOfItems } = req.body;
+//     console.log(req.body);
+//     if (!Number.isInteger(numberOfItems) || numberOfItems < 1) {
+//       throw new ClientError(400, 'product quantity must be a positive integer');
+//     }
+
+//     if (!cartId) {
+//       const sql = `
+//       insert into "cartItems" ("productId","quantity")
+//       values ($1, $2)
+//       returning *
+//     `;
+//       const params = [productId, numberOfItems];
+//       const result = await db.query(sql, params);
+//       const [cartItems] = result.rows;
+
+//       res.status(201).json(cartItems);
+//     } else {
+//       if (cartId) {
+//         const { cartId } = req.params;
+//         if (!Number.isInteger(+cartId)) {
+//           throw new ClientError(400, `Non-integer cartId: ${cartId}`);
+//         }
+
+//         //
+//         const { productId, quantity } = req.body;
+//         if (!productId || !Number.isInteger(quantity) || quantity < 1) {
+//           throw new ClientError(
+//             400,
+//             'productId and product quantity must be a positive integer'
+//           );
+//         }
+
+//         // Insert a new row into cart_items
+//         // For this cartId, is this something that should be assigned a $ variable?
+//         const sql = `
+//       update "cartItems"
+//       set "quantity" = $1
+//       where "cartId"  = $2 and "productId" = $3
+//       returning *
+//     `;
+//         const params = [quantity, cartId, productId];
+//         const result = await db.query(sql, params);
+//         console.log(result.rows);
+//         const updatedCart = result.rows[0];
+//         if (!updatedCart) {
+//           throw new ClientError(404, `cartId ${cartId} doesn't exist`);
+//         }
+//         res.json(updatedCart);
+//       }
+//     }
+
+//     // use sql to see if there's a cart (initial query)
+
+//     // if else statement if cart doesn't exist, do a post request
+//     // if a cart does exist, do a put request (sql query)
+//     // line 168 will run depending on which sql was defined
+//   } catch (err) {
+//     next(err);
+//   }
+// });
+
 app.post('/api/shop/product/:productId', async (req, res, next) => {
   console.log('/api/shop/product/:productId hit');
   try {
     // Destructure from the request body
     const { productId } = req.params;
     console.log(productId);
-    // if (!Number.isInteger(+productId)) {
-    //   throw new ClientError(400, `Non-integer cartId: ${productId}`);
-    // }
 
-    // I think we need to pulling the productName & photoUrl as well?
-    const { numberOfItems } = req.body;
-    console.log(req.body);
-    if (!Number.isInteger(numberOfItems) || numberOfItems < 1) {
-      throw new ClientError(400, 'product quantity must be a positive integer');
+    // Cart ID and product quantity array
+    const { cartId, products } = req.body; // Assuming `products` is an array of { productId, quantity }
+
+    if (!Array.isArray(products) || products.length === 0) {
+      throw new ClientError(
+        400,
+        'Products must be an array of objects with productId and quantity.'
+      );
     }
-    // might need to add an extra error message for description?
 
-    // Insert a new row into cart_items
-    const sql = `
-      insert into "cartItems" ("productId","quantity")
-      values ($1, $2)
-      returning *
-    `;
-    const params = [productId, numberOfItems];
-    const result = await db.query(sql, params);
-    const [cartItems] = result.rows;
+    // Validate each product's quantity
+    products.forEach(({ productId, quantity }) => {
+      if (!Number.isInteger(quantity) || quantity < 1) {
+        throw new ClientError(
+          400,
+          'Each product quantity must be a positive integer.'
+        );
+      }
+    });
 
-    res.status(201).json(cartItems);
+    if (!cartId) {
+      // If there's no cartId (new cart), insert new cart items
+      const sql = `
+        INSERT INTO "cartItems" ("productId", "quantity")
+        VALUES ($1, $2)
+        RETURNING *
+      `;
+      const result = [];
+
+      // Loop through each product and insert into the cartItems table
+      for (const { productId, quantity } of products) {
+        const params = [productId, quantity];
+        const res = await db.query(sql, params);
+        result.push(res.rows[0]); // Collect the results for each product added
+      }
+
+      res.status(201).json(result); // Return all the added items in the response
+    } else {
+      // If cartId exists (existing cart), update existing products or add new ones
+      const result = [];
+
+      for (const { productId, quantity } of products) {
+        // Check if the product is already in the cart
+        const checkSql = `
+          SELECT * FROM "cartItems"
+          WHERE "cartId" = $1 AND "productId" = $2
+        `;
+        const checkParams = [cartId, productId];
+        const checkResult = await db.query(checkSql, checkParams);
+
+        if (checkResult.rows.length > 0) {
+          // If product exists, update its quantity
+          const updateSql = `
+            UPDATE "cartItems"
+            SET "quantity" = $1
+            WHERE "cartId" = $2 AND "productId" = $3
+            RETURNING *
+          `;
+          const updateParams = [quantity, cartId, productId];
+          const updateRes = await db.query(updateSql, updateParams);
+          result.push(updateRes.rows[0]); // Add the updated product
+        } else {
+          // If product doesn't exist in the cart, add it
+          const insertSql = `
+            INSERT INTO "cartItems" ("cartId", "productId", "quantity")
+            VALUES ($1, $2, $3)
+            RETURNING *
+          `;
+          const insertParams = [cartId, productId, quantity];
+          const insertRes = await db.query(insertSql, insertParams);
+          result.push(insertRes.rows[0]); // Add the newly inserted product
+        }
+      }
+
+      res.json(result); // Return all the updated/added products in the cart
+    }
   } catch (err) {
     next(err);
   }
