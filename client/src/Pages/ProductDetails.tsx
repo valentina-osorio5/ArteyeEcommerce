@@ -3,7 +3,7 @@ import { useEffect, useState, useContext } from 'react';
 import { Product } from './ProductsPage';
 import { useParams } from 'react-router-dom';
 import { ShoppingCartContext } from '../components/ShoppingCartContext';
-import { v4 as uuidv4 } from 'uuid';
+// import { v4 as uuidv4 } from 'uuid';
 import { useUser } from '../components/useUser';
 
 export function ProductDetails() {
@@ -140,40 +140,3 @@ type Cart = {
   productId: number;
   quantity: number;
 };
-
-//uuid library, send cartId with fetch request to create a cart for a guest
-//download npm link in client
-//check to see if cartId already exists...
-//post request (get the post server working)
-//would need to turn into a put request if the cart exists
-//look at other exercises for the post/ put
-
-//   return (
-//     {cart &&
-
-//     }
-//   );
-// }
-
-// useEffect(() => {
-//   // console.log('useEffect fired');
-//   async function fetchCart() {
-//     // console.log('fetch product fired');
-//     try {
-//       const res = await fetch(`/api/shop/cart/${cartId}`);
-//       // console.log(res);
-//       if (!res.ok) {
-//         console.error('Failed to fetch cart');
-//         return;
-//       }
-//       const data = await res.json();
-//       setCart(data);
-//     } catch (error) {
-//       console.error('Error fetching cart details:', error);
-//     }
-//   }
-
-//   // if (productId) {
-//   fetchCart();
-//   // }
-// }, [cartId]);

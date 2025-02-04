@@ -130,6 +130,131 @@ app.post('/api/auth/sign-up', async (req, res, next) => {
   }
 });
 
+app.get('/api/shop/user/:userId', async (req, res, next) => {
+  console.log('/api/shop/user/:userId hit');
+  try {
+    const userId = Number(req.params.userId);
+    console.log(userId);
+    if (!Number.isInteger(+userId)) {
+      throw new ClientError(400, `Non-integer userId: ${userId}`);
+    }
+
+    const sql = `
+    select "cartId", "quantity", "productId","productName", "description", "imageUrl", "price"
+    from "cartItems"
+    join "products" using ("productId")
+    where "userId" = $1
+    `;
+    // on line 146, join to "products" where "productId" = $2
+    // might need to eventually refine what we're selecting instead of all,
+    // probably an object for each productId
+
+    const params = [userId];
+    const result = await db.query(sql, params);
+    // console.log(result.rows);
+    const cart = result.rows;
+    console.log('cart', cart);
+
+    if (!cart) {
+      throw new ClientError(400, `cart for userId ${userId} not found`);
+    }
+    res.status(200).json(cart);
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post('/api/shop/user/:userId', async (req, res, next) => {
+  console.log('pos /api/shop/user/:userId hit');
+  try {
+    // shouldn't userId be the req.params? not req.body?
+    const { userId } = req.params;
+    console.log('post userId', userId);
+    if (!Number.isInteger(+userId)) {
+      throw new ClientError(400, `Non-integer userId: ${userId}`);
+    }
+    const { productId, quantity } = req.body;
+    if (!productId || !Number.isInteger(quantity) || quantity < 1) {
+      throw new ClientError(
+        400,
+        'productId must be provided and quantity must be a positive integer'
+      );
+    }
+    // First, see if an entry for this product (for this user) already exists.
+    const checkSql = `
+      SELECT *
+      FROM "cartItems"
+      WHERE "productId" = $1 AND "userId" = $2
+    `;
+    const checkParams = [productId, userId];
+    const checkResult = await db.query(checkSql, checkParams);
+    console.log(checkResult);
+    if (checkResult.rows.length > 0) {
+      // If the product already exists in corresponding product cart, update the quantity.
+      const existingItem = checkResult.rows[0];
+      const updateSql = `
+        UPDATE "cartItems"
+        SET "quantity" = "quantity" + $1
+        WHERE "cartId" = $2
+        RETURNING *
+      `;
+      const updateParams = [quantity, existingItem.cartId];
+      const updateResult = await db.query(updateSql, updateParams);
+      return res.status(200).json(updateResult.rows[0]);
+    } else {
+      // Otherwise, insert a new row.
+      const insertSql = `
+        INSERT INTO "cartItems" ("userId", "productId", "quantity")
+        VALUES ($1, $2, $3)
+        RETURNING *
+      `;
+      const insertParams = [userId, productId, quantity];
+      const insertResult = await db.query(insertSql, insertParams);
+      return res.status(201).json(insertResult.rows[0]);
+    }
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.put('/api/shop/user/:userId', async (req, res, next) => {
+  console.log('put route /api/shop/user/:userId hit');
+  try {
+    // Destructure from the request body
+    const { userId } = req.params;
+    if (!Number.isInteger(+userId)) {
+      throw new ClientError(400, `Non-integer userId: ${userId}`);
+    }
+
+    const { productId, quantity } = req.body;
+    if (!productId || !Number.isInteger(quantity) || quantity < 1) {
+      throw new ClientError(
+        400,
+        'productId and product quantity must be a positive integer'
+      );
+    }
+
+    // Insert a new row into cart_items
+    // Do we need to have all values accounted or only the ones that are being updated?
+    const sql = `
+      update "cartItems"
+      set "quantity" = $1
+      where "userId"  = $2 and "productId" = $3
+      returning *
+    `;
+    const params = [quantity, userId, productId];
+    const result = await db.query(sql, params);
+    console.log(result.rows);
+    const updatedCart = result.rows[0];
+    if (!updatedCart) {
+      throw new ClientError(404, `cart for this item does not exist`);
+    }
+    res.json(updatedCart);
+  } catch (err) {
+    next(err);
+  }
+});
+
 app.post('/api/auth/sign-in', async (req, res, next) => {
   console.log('/api/auth/sign-in hit');
   try {
@@ -241,221 +366,6 @@ app.post('/api/shop/cart', async (req, res, next) => {
     next(err);
   }
 });
-
-// creates a unique cart per item
-// app.post('/api/shop/cart', async (req, res, next) => {
-//   console.log('POST /api/shop/cart hit');
-//   try {
-//     // Expect productId and quantity in the body.
-//     const { productId, quantity, userId } = req.body;
-//     // You might get userId from the token via authMiddleware instead.
-//     if (!productId || !Number.isInteger(quantity) || quantity < 1) {
-//       throw new ClientError(
-//         400,
-//         'productId must be provided and quantity must be a positive integer'
-//       );
-//     }
-//     // Optional: check if a cart item for the same product (and same user) already exists.
-//     // If so, update the quantity rather than inserting a new row.
-//     const checkSql = `
-//       SELECT * FROM "cartItems"
-//       WHERE "productId" = $1 ${userId ? 'AND "userId" = $2' : ''}
-//     `;
-//     const checkParams = userId ? [productId, userId] : [productId];
-//     const checkResult = await db.query(checkSql, checkParams);
-
-//     if (checkResult.rows.length > 0) {
-//       // If the item is already in the cart, update the quantity.
-//       const updateSql = `
-//         UPDATE "cartItems"
-//         SET "quantity" = "quantity" + $1
-//         WHERE "cartId" = $2
-//         RETURNING *
-//       `;
-//       const existingCart = checkResult.rows[0];
-//       const updateParams = [quantity, existingCart.cartId];
-//       const updateResult = await db.query(updateSql, updateParams);
-//       return res.status(200).json(updateResult.rows[0]);
-//     } else {
-//       // Otherwise, insert a new cart item.
-//       const insertSql = `
-//         INSERT INTO "cartItems" ("userId", "productId", "quantity")
-//         VALUES ($1, $2, $3)
-//         RETURNING *
-//       `;
-//       const insertParams = [userId || null, productId, quantity];
-//       const insertResult = await db.query(insertSql, insertParams);
-//       return res.status(201).json(insertResult.rows[0]);
-//     }
-//   } catch (err) {
-//     next(err);
-//   }
-// });
-
-// app.post('/api/shop/product/:productId', async (req,res, next) => {
-
-// })
-
-// app.post('/api/shop/product/:productId', async (req, res, next) => {
-//   console.log('/api/shop/product/:productId hit');
-//   try {
-//     // Destructure from the request body
-//     const { productId } = req.params;
-//     console.log(productId);
-//     // if (!Number.isInteger(+productId)) {
-//     //   throw new ClientError(400, `Non-integer cartId: ${productId}`);
-//     // }
-
-//     // I think we need to pulling the productName & photoUrl as well?
-//     const { cartId, numberOfItems } = req.body;
-//     console.log(req.body);
-//     if (!Number.isInteger(numberOfItems) || numberOfItems < 1) {
-//       throw new ClientError(400, 'product quantity must be a positive integer');
-//     }
-
-//     if (!cartId) {
-//       const sql = `
-//       insert into "cartItems" ("productId","quantity")
-//       values ($1, $2)
-//       returning *
-//     `;
-//       const params = [productId, numberOfItems];
-//       const result = await db.query(sql, params);
-//       const [cartItems] = result.rows;
-
-//       res.status(201).json(cartItems);
-//     } else {
-//       if (cartId) {
-//         const { cartId } = req.params;
-//         if (!Number.isInteger(+cartId)) {
-//           throw new ClientError(400, `Non-integer cartId: ${cartId}`);
-//         }
-
-//         //
-//         const { productId, quantity } = req.body;
-//         if (!productId || !Number.isInteger(quantity) || quantity < 1) {
-//           throw new ClientError(
-//             400,
-//             'productId and product quantity must be a positive integer'
-//           );
-//         }
-
-//         // Insert a new row into cart_items
-//         // For this cartId, is this something that should be assigned a $ variable?
-//         const sql = `
-//       update "cartItems"
-//       set "quantity" = $1
-//       where "cartId"  = $2 and "productId" = $3
-//       returning *
-//     `;
-//         const params = [quantity, cartId, productId];
-//         const result = await db.query(sql, params);
-//         console.log(result.rows);
-//         const updatedCart = result.rows[0];
-//         if (!updatedCart) {
-//           throw new ClientError(404, `cartId ${cartId} doesn't exist`);
-//         }
-//         res.json(updatedCart);
-//       }
-//     }
-
-//     // use sql to see if there's a cart (initial query)
-
-//     // if else statement if cart doesn't exist, do a post request
-//     // if a cart does exist, do a put request (sql query)
-//     // line 168 will run depending on which sql was defined
-//   } catch (err) {
-//     next(err);
-//   }
-// });
-
-// app.post('/api/shop/product/:productId', async (req, res, next) => {
-//   console.log('/api/shop/product/:productId hit');
-//   try {
-//     // Destructure from the request body
-//     const { productId } = req.params;
-//     // console.log(productId);
-
-//     // Cart ID and product quantity array
-//     const { cartId, product } = req.body; // Assuming `products` is an array of { productId, quantity }
-//     console.log(product);
-//     if (!Array.isArray(product) || product.length === 0) {
-//       throw new ClientError(
-//         400,
-//         'Products must be an array of objects with productId and quantity.'
-//       );
-//     }
-
-//     // Validate each product's quantity
-//     product.forEach(({ productId, quantity }) => {
-//       if (!Number.isInteger(quantity) || quantity < 1) {
-//         throw new ClientError(
-//           400,
-//           'Each product quantity must be a positive integer.'
-//         );
-//       }
-//     });
-
-//     if (!cartId) {
-//       // If there's no cartId (new cart), insert new cart items
-//       const sql = `
-//         INSERT INTO "cartItems" ("productId", "quantity")
-//         VALUES ($1, $2)
-//         RETURNING *
-//       `;
-//       const result = [];
-
-//       // Loop through each product and insert into the cartItems table
-//       for (const { productId, quantity } of products) {
-//         const params = [productId, quantity];
-//         const res = await db.query(sql, params);
-//         result.push(res.rows[0]); // Collect the results for each product added
-//       }
-
-//       res.status(201).json(result); // Return all the added items in the response
-//     } else {
-//       // If cartId exists (existing cart), update existing products or add new ones
-//       const result = [];
-
-//       for (const { productId, quantity } of products) {
-//         // Check if the product is already in the cart
-//         const checkSql = `
-//           SELECT * FROM "cartItems"
-//           WHERE "cartId" = $1 AND "productId" = $2
-//         `;
-//         const checkParams = [cartId, productId];
-//         const checkResult = await db.query(checkSql, checkParams);
-
-//         if (checkResult.rows.length > 0) {
-//           // If product exists, update its quantity
-//           const updateSql = `
-//             UPDATE "cartItems"
-//             SET "quantity" = $1
-//             WHERE "cartId" = $2 AND "productId" = $3
-//             RETURNING *
-//           `;
-//           const updateParams = [quantity, cartId, productId];
-//           const updateRes = await db.query(updateSql, updateParams);
-//           result.push(updateRes.rows[0]); // Add the updated product
-//         } else {
-//           // If product doesn't exist in the cart, add it
-//           const insertSql = `
-//             INSERT INTO "cartItems" ("cartId", "productId", "quantity")
-//             VALUES ($1, $2, $3)
-//             RETURNING *
-//           `;
-//           const insertParams = [cartId, productId, quantity];
-//           const insertRes = await db.query(insertSql, insertParams);
-//           result.push(insertRes.rows[0]); // Add the newly inserted product
-//         }
-//       }
-
-//       res.json(result); // Return all the updated/added products in the cart
-//     }
-//   } catch (err) {
-//     next(err);
-//   }
-// });
 
 app.put('/api/shop/cart/:cartId', async (req, res, next) => {
   console.log('put route /api/shop/cart/:cartId hit');
