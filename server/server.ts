@@ -164,7 +164,7 @@ app.get('/api/shop/user/:userId', async (req, res, next) => {
   }
 });
 
-app.post('/api/shop/user/:userId', async (req, res, next) => {
+app.post('/api/shop/user/:userId', authMiddleware, async (req, res, next) => {
   console.log('pos /api/shop/user/:userId hit');
   try {
     // shouldn't userId be the req.params? not req.body?
@@ -186,7 +186,7 @@ app.post('/api/shop/user/:userId', async (req, res, next) => {
       FROM "cartItems"
       WHERE "productId" = $1 AND "userId" = $2
     `;
-    const checkParams = [productId, userId];
+    const checkParams = [productId, req.user?.userId];
     const checkResult = await db.query(checkSql, checkParams);
     console.log(checkResult);
     if (checkResult.rows.length > 0) {
@@ -208,7 +208,7 @@ app.post('/api/shop/user/:userId', async (req, res, next) => {
         VALUES ($1, $2, $3)
         RETURNING *
       `;
-      const insertParams = [userId, productId, quantity];
+      const insertParams = [req.user?.userId, productId, quantity];
       const insertResult = await db.query(insertSql, insertParams);
       return res.status(201).json(insertResult.rows[0]);
     }

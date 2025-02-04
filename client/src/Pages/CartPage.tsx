@@ -64,6 +64,9 @@ export function CartPage() {
       console.error('Error fetching cart:', error);
     }
   }
+  function toDollars(value: number): string {
+    return '$' + value.toFixed(2);
+  }
 
   // function handleAddToCart() {
   //   if (!product) throw new Error('Product data missing');
@@ -157,17 +160,67 @@ export function CartPage() {
   // }
 
   return (
-    <div style={{ fontFamily: 'Nova Round' }}>
-      {cartItems.map((cartItem) => (
-        <div className="mb-4 bg-blue-500">
-          <h2>{cartItem.productName}</h2>
-          <p>Quantity: {cartItem.quantity}</p>
-          <p>{cartItem.price}</p>
-          {/* <p>{cartItem.productName}</p> */}
+    <>
+      <div className="container flex">
+        <div style={{ fontFamily: 'Nova Round' }} className="w-3/5 ml-4 p-4">
+          <h1 className="align-center justify-self-center text-2xl mb-2">
+            {' '}
+            Your Shopping Cart
+          </h1>
+          {cartItems.map((cartItem) => (
+            <div key={cartItem.productId} className="mb-4">
+              <h2 className="font-bold">{cartItem.productName}</h2>
+              <p className="font-light text-sm">
+                Item Price: ${cartItem.price}
+              </p>
+              <p className="font-light text-sm">
+                Item Total: {toDollars(cartItem.price * cartItem.quantity)}
+              </p>
+              <img
+                className=""
+                src={cartItem.imageUrl}
+                alt={cartItem.productName}
+                style={{ width: '125px' }}
+              />
+              <div className="flex items-center space-x-2 mt-2">
+                <button
+                  style={{ backgroundColor: '#9381ef' }}
+                  className="px-1 py-.75 rounded">
+                  -
+                </button>
+                <p className="font-light">{cartItem.quantity}</p>
+                <button
+                  style={{ backgroundColor: '#9381ef' }}
+                  className="px-1 py-.75 rounded">
+                  +
+                </button>
+                <button className="text-sm underline">Remove from Cart</button>
+              </div>
+            </div>
+          ))}
         </div>
-      ))}
+        <div
+          style={{ fontFamily: 'Nova Round' }}
+          className="w-2/5 border-b-1 0 ml-4 p-4 border-2">
+          <h2 className="text-xl mb-2">Order Summary</h2>
+          <h3 className="mb-2">Subtotal </h3>
+          <p className="text-xs">Shipping & taxes calculated at checkout</p>
+          <br></br>
+          <br></br>
+          <br></br>
+          <button
+            style={{ backgroundColor: '#eaf585' }}
+            className="flex justify-items-center justify-self-center border border-gray-300 rounded py-1 px-3 mx-10 mb-5">
+            Proceed to checkout
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
 
-      {/* <h2>My Cart</h2>
+{
+  /* <h2>My Cart</h2>
       {!user ? (
         <p>You must be signed in to view or modify your cart.</p>
       ) : (
@@ -231,7 +284,5 @@ export function CartPage() {
             ))}
           </ul>
         </>
-      )} */}
-    </div>
-  );
+      )} */
 }
