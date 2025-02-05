@@ -1,70 +1,141 @@
-import React, { createContext, useState } from 'react';
+// current working version
+import React, { createContext, useEffect, useState } from 'react';
 import { type Product } from '../Pages/ProductsPage';
 
-// interface Product {
-//   productId: string;
-//   productName: string;
-//   price: number;
-//   quantity: number;
-// }
-
-//defining type for the cart context value
+// Define the context type
 export type ShoppingCartValue = {
   cart: Product[];
   addToCart: (product: Product) => void;
   decrementCart: (product: Product) => void;
   removeFromCart: (product: Product) => void;
+  fetchCartFromDB: (userId: number) => Promise<void>;
 };
 
-//default value for CartContext
+// Default values for ShoppingCartContext
 export const defaultShoppingCartValue: ShoppingCartValue = {
   cart: [],
   addToCart: () => undefined,
   decrementCart: () => undefined,
   removeFromCart: () => undefined,
+  fetchCartFromDB: async () => {},
 };
 
+// Create the ShoppingCartContext
 export const ShoppingCartContext = createContext(defaultShoppingCartValue);
 
 export const ShoppingCartProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [cart, setCart] = useState([]);
+  const [cart, setCart] = useState<Product[]>([]);
+  const [userId, setUserId] = useState<number | null>(null);
 
-  const addToCart = (product: Product) => {
-    setCart((prevCart) => [...prevCart, product]);
+  // Fetch cart from the database
+  const fetchCartFromDB = async (userId: number) => {
+    if (!userId) return;
+    try {
+      const res = await fetch(`/api/shop/user/${userId}`);
+      if (!res.ok) throw new Error(`Error fetching cart: ${res.status}`);
+      const data = await res.json();
+      setCart(data);
+    } catch (error) {
+      console.error('Error fetching cart:', error);
+    }
   };
 
-  const decrementCart = (product: Product) => {
-    setCart((prevCart) => {
-      //should it be cartItem instead of item? do I need to define the type or interface above for cartItem or product?
-      //quantity does not exist on product but it does exist on cartItem...
-      const existingProductIndex = prevCart.findIndex(
-        (item) => item.id === product.productId
-      );
+  useEffect(() => {
+    if (userId) {
+      fetchCartFromDB(userId);
+    }
+  }, [userId]);
 
-      if (existingProductIndex >= 0) {
-        const updatedCart = [...prevCart];
-        const currentQuantity = updatedCart[existingProductIndex].quantity;
+  // ✅ WORKING addToCart (syncs with database)
+  const addToCart = async (product: Product) => {
+    if (!userId) return;
 
-        // Decrement the quantity if it's greater than 1, otherwise remove the product
-        if (currentQuantity > 1) {
-          updatedCart[existingProductIndex].quantity -= 1;
-        } else {
-          updatedCart.splice(existingProductIndex, 1); // Remove the product if quantity is 1
-        }
+    try {
+      const res = await fetch('/api/shop/cart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: product.productId,
+          quantity: 1,
+          userId,
+        }),
+      });
 
-        return updatedCart;
-      }
+      if (!res.ok) throw new Error(`Error adding item: ${res.status}`);
+      await res.json();
 
-      return prevCart; // If the product is not in the cart, return the cart unchanged
-    });
+      // Refetch cart after updating database
+      fetchCartFromDB(userId);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  const removeFromCart = (product: Product) => {};
+  // ✅ WORKING decrementCart (syncs with database)
+  const decrementCart = async (product: Product) => {
+    if (!userId) return;
+
+    if (product.quantity <= 1) {
+      removeFromCart(product);
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/shop/cart', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: product.productId,
+          quantity: product.quantity - 1,
+          userId,
+        }),
+      });
+
+      if (!res.ok) throw new Error(`Error decrementing item: ${res.status}`);
+      await res.json();
+
+      // Refetch cart after updating database
+      fetchCartFromDB(userId);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // ✅ WORKING removeFromCart (syncs with database)
+  const removeFromCart = async (product: Product) => {
+    if (!userId) return;
+
+    try {
+      const res = await fetch('/api/shop/cart', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: product.productId,
+          userId,
+        }),
+      });
+
+      if (!res.ok) throw new Error(`Error removing item: ${res.status}`);
+      await res.json();
+
+      // Refetch cart after updating database
+      fetchCartFromDB(userId);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   return (
-    <ShoppingCartContext.Provider value={{ cart, addToCart, decrementCart }}>
+    <ShoppingCartContext.Provider
+      value={{
+        cart,
+        addToCart,
+        decrementCart,
+        removeFromCart,
+        fetchCartFromDB,
+      }}>
       {children}
     </ShoppingCartContext.Provider>
   );
