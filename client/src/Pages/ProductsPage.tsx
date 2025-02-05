@@ -68,7 +68,6 @@ export function ProductsPage() {
               style={{ width: '100%' }}
             />
             <h3
-              // style={{font-sans:'Nova Round'}}
               className=" font-display ml-4 text-center "
               style={{ fontFamily: 'Nova Round' }}>
               {product.productName}
@@ -84,46 +83,3 @@ export function ProductsPage() {
     </div>
   );
 }
-
-// type handleProductClickProps = {
-//   product: Product;
-// };
-
-// function handleProductClick({ product }: handleProductClickProps) {
-//   console.log('product div clicked', product.productId);
-//   // return (
-//   //   <div>
-//   //     <Link to={`product/${product.productId}`}></Link>
-//   //     <div>
-//   //       <Link
-//   //         className="background-color: #EAF585,
-//   //                 height: 2.5rem,
-//   //                 text-center
-//   //                 justify-center"
-//   //         to="/">
-//   //         ARTEYE
-//   //       </Link>
-//   //       <nav className="float-right" style={{ display: 'flex', gap: '2rem' }}>
-//   //         {/* <FontAwesomeIcon icon=“fa-light fa-cart-shopping” /> */}
-//   //         <Link to="/cart">My Cart</Link>
-//   //         <Link to="/sign-in">Sign In</Link>
-//   //       </nav>
-//   //     </div>
-//   //     <div key={product.productId} style={{ width: '200px' }}>
-//   //       <img
-//   //         src={product.imageUrl}
-//   //         alt={product.productName}
-//   //         style={{ width: '100%' }}
-//   //       />
-//   //       <h3
-//   //         // style={{font-sans:'Nova Round'}}
-//   //         className=" font-display ml-4 text-center ">
-//   //         {product.productName}
-//   //       </h3>
-//   //       <p className="font-semibold justify-self-center ">
-//   //         Price: ${product.price}
-//   //       </p>
-//   //     </div>
-//   //   </div>
-//   // );
-// }
