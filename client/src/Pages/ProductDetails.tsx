@@ -68,50 +68,18 @@ export function ProductDetails() {
             // or use the value from your context if you allow choosing quantity
           }),
         };
-        console.log('options from addtocart pd', options);
-        console.log('user from productDetails', user);
+        console.log('user from addtoCart PD', user);
         const res = await fetch('/api/shop/cart', options);
         if (!res.ok) throw new Error(`Fetch error ${res.status}`);
         const data = await res.json();
         console.log('Cart updated:', data);
+        // the data we get back is not tracking the user....
       } catch (err) {
         console.error(err);
       }
     }
     postData();
   }
-
-  // function handleAddToCart() {
-  //   if (!product) throw new Error('something went wrong...');
-  //   addToCart(product);
-  //   addNewCart();
-  // }
-
-  function addNewCart() {
-    // const { cartId } = useParams<{ cartId: string }>();
-    // const [cart, setCart] = useState<any>(null);
-    console.log(`addNewCart fired`);
-    async function postData() {
-      try {
-        const options = {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ numberOfItems, productId }),
-        };
-
-        const res = await fetch(`/api/shop/product/${productId}`, options);
-        console.log(res);
-        if (!res.ok) throw new Error(`fetch Error ${res.status}`);
-        const data = await res.json();
-        console.log(data);
-      } catch (err) {
-        console.error(err);
-      }
-    }
-    postData();
-  }
-
-  // if (!product) console.error('Error fetching product details');
 
   return (
     <div style={{ fontFamily: 'Nova Round' }} className="mx-3">

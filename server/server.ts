@@ -324,6 +324,7 @@ app.post('/api/shop/cart', async (req, res, next) => {
   try {
     const { productId, quantity, userId } = req.body;
     console.log('post productId', productId);
+    console.log('userId from post', userId);
     if (!productId || !Number.isInteger(quantity) || quantity < 1) {
       throw new ClientError(
         400,
@@ -338,8 +339,9 @@ app.post('/api/shop/cart', async (req, res, next) => {
     `;
     const checkParams = [productId, userId];
     const checkResult = await db.query(checkSql, checkParams);
-    console.log(checkResult);
+    // console.log(checkResult);
     if (checkResult.rows.length > 0) {
+      console.log('here');
       // If the product already exists in the cart, update the quantity.
       const existingItem = checkResult.rows[0];
       const updateSql = `
@@ -352,13 +354,14 @@ app.post('/api/shop/cart', async (req, res, next) => {
       const updateResult = await db.query(updateSql, updateParams);
       return res.status(200).json(updateResult.rows[0]);
     } else {
+      console.log('else block');
       // Otherwise, insert a new row.
       const insertSql = `
         insert into "cartItems" ("userId", "productId", "quantity")
         values ($1, $2, $3)
         returning *
       `;
-      const insertParams = [req.user?.userId, productId, quantity];
+      const insertParams = [userId, productId, quantity];
       const insertResult = await db.query(insertSql, insertParams);
       return res.status(201).json(insertResult.rows[0]);
     }
