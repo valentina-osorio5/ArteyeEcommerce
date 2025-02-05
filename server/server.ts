@@ -459,64 +459,24 @@ app.put('/api/shop/cart', async (req, res, next) => {
   }
 });
 
-app.put('/api/shop/cart/:cartId', authMiddleware, async (req, res, next) => {
-  console.log('put route /api/shop/cart/:cartId hit');
+app.delete('/api/shop/cart', async (req, res, next) => {
+  console.log('delete /api/shop/cart hit');
   try {
-    // Destructure from the request body
-    const { cartId } = req.params;
-    if (!Number.isInteger(+cartId)) {
-      throw new ClientError(400, `Non-integer cartId: ${cartId}`);
-    }
-
-    // I think we need to be pulling the productName & photoUrl as well?
-    const { productId, quantity } = req.body;
-    if (!productId || !Number.isInteger(quantity) || quantity < 1) {
+    const { productId, userId } = req.body;
+    if (!productId || !userId) {
       throw new ClientError(
         400,
-        'productId and product quantity must be a positive integer'
+        `Invalid productId: ${productId} or userId: ${userId}`
       );
     }
-
-    // Insert a new row into cart_items
-    // Do we need to have all values accounted or only the ones that are being updated?
     const sql = `
-      update "cartItems"
-      set "quantity" = $1
-      where "cartId"  = $2 and "productId" = $3 and "userId" = $4
-      returning *
+      delete from "cartItems"
+      where "productId" = $1 and "userId" = $2
+      RETURNING *;
     `;
-    const params = [quantity, cartId, productId, req.user?.userId];
+    const params = [productId, userId];
     const result = await db.query(sql, params);
-    console.log(result.rows);
-    const updatedCart = result.rows[0];
-    if (!updatedCart) {
-      throw new ClientError(404, `cartId ${cartId} doesn't exist`);
-    }
-    res.json(updatedCart);
-  } catch (err) {
-    next(err);
-  }
-});
-
-app.delete('/api/shop/cart/:cartId', async (req, res, next) => {
-  console.log('delete /api/shop/cart/:cartId hit');
-  try {
-    const { cartId } = req.params;
-    if (!Number.isInteger(+cartId)) {
-      throw new ClientError(400, `Non-integer cartId: ${cartId}`);
-    }
-    const sql = `
-  delete from "cartItems" where "cartId" = $1 and "userId" = $2
-  returning *;
-  `;
-    const params = [cartId];
-    const result = await db.query(sql, params);
-    console.log(result.rows);
-    const deleteCart = result.rows[0];
-    if (!deleteCart) {
-      throw new ClientError(404, `cart ${cartId} doesn't exist!`);
-    }
-    res.sendStatus(204);
+    res.status(200).json(result.rows[0]);
   } catch (err) {
     next(err);
   }
@@ -534,3 +494,43 @@ app.use(errorMiddleware);
 app.listen(process.env.PORT, () => {
   console.log('Listening on port', process.env.PORT);
 });
+
+// the below can likely be deleted
+// app.put('/api/shop/cart/:cartId', authMiddleware, async (req, res, next) => {
+//   console.log('put route /api/shop/cart/:cartId hit');
+//   try {
+//     // Destructure from the request body
+//     const { cartId } = req.params;
+//     if (!Number.isInteger(+cartId)) {
+//       throw new ClientError(400, `Non-integer cartId: ${cartId}`);
+//     }
+
+//     // I think we need to be pulling the productName & photoUrl as well?
+//     const { productId, quantity } = req.body;
+//     if (!productId || !Number.isInteger(quantity) || quantity < 1) {
+//       throw new ClientError(
+//         400,
+//         'productId and product quantity must be a positive integer'
+//       );
+//     }
+
+//     // Insert a new row into cart_items
+//     // Do we need to have all values accounted or only the ones that are being updated?
+//     const sql = `
+//       update "cartItems"
+//       set "quantity" = $1
+//       where "cartId"  = $2 and "productId" = $3 and "userId" = $4
+//       returning *
+//     `;
+//     const params = [quantity, cartId, productId, req.user?.userId];
+//     const result = await db.query(sql, params);
+//     console.log(result.rows);
+//     const updatedCart = result.rows[0];
+//     if (!updatedCart) {
+//       throw new ClientError(404, `cartId ${cartId} doesn't exist`);
+//     }
+//     res.json(updatedCart);
+//   } catch (err) {
+//     next(err);
+//   }
+// });

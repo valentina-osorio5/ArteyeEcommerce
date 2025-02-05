@@ -96,6 +96,26 @@ export function CartPage() {
       console.error(err);
     }
   }
+  async function handleDelete(cartItem: CartItem) {
+    console.log('delete button pressed');
+    try {
+      const options = {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: cartItem.productId,
+          userId: user,
+        }),
+      };
+      const res = await fetch('/api/shop/cart', options);
+      if (!res.ok) throw new Error(`Fetch error ${res.status}`);
+      await res.json();
+      console.log('cart item removed');
+      await fetchCartItems(); // Ensure UI updates
+    } catch (err) {
+      console.error(err);
+    }
+  }
   return (
     <>
       <div className="container flex">
@@ -131,7 +151,11 @@ export function CartPage() {
                   onClick={() => handleAddToCart(cartItem)}>
                   +
                 </button>
-                <button className="text-sm underline">Remove from Cart</button>
+                <button
+                  className="text-sm underline"
+                  onClick={() => handleDelete(cartItem)}>
+                  Remove from Cart
+                </button>
               </div>
             </div>
           ))}
