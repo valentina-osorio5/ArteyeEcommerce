@@ -63,10 +63,12 @@ export function CartPage() {
           userId: user,
         }),
       };
+      console.log('user from addtocart', user);
       const res = await fetch('/api/shop/cart', options);
       if (!res.ok) throw new Error(`Fetch error ${res.status}`);
       await res.json();
-      await fetchCartItems(); // Ensure UI updates
+      await fetchCartItems();
+      // Ensure UI updates
     } catch (err) {
       console.error(err);
     }
@@ -116,6 +118,7 @@ export function CartPage() {
       console.error(err);
     }
   }
+
   return (
     <>
       <div className="container flex">
