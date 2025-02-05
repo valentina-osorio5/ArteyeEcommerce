@@ -20,7 +20,8 @@ export function ProductDetails() {
   const numberOfItems = context.cart.length;
   console.log(addToCart);
   const userContext = useUser();
-  console.log(userContext.user.userId);
+  console.log(userContext.user?.userId);
+  const user = userContext.user?.userId;
   // console.log(product, productId);
 
   useEffect(() => {
@@ -63,10 +64,12 @@ export function ProductDetails() {
           body: JSON.stringify({
             productId: product.productId,
             quantity: 1,
-            userId: userContext.user.userId,
+            userId: user,
             // or use the value from your context if you allow choosing quantity
           }),
         };
+        console.log('options from addtocart pd', options);
+        console.log('user from productDetails', user);
         const res = await fetch('/api/shop/cart', options);
         if (!res.ok) throw new Error(`Fetch error ${res.status}`);
         const data = await res.json();
