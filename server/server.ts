@@ -140,7 +140,7 @@ app.get('/api/shop/user/:userId', async (req, res, next) => {
     }
 
     const sql = `
-    select "cartId", "quantity", "productId","productName", "description", "imageUrl", "price"
+    select "cartId", "quantity", "productId","productName", "imageUrl", "price"
     from "cartItems"
     join "products" using ("productId")
     where "userId" = $1
@@ -217,7 +217,7 @@ app.post('/api/shop/user/:userId', authMiddleware, async (req, res, next) => {
   }
 });
 
-app.put('/api/shop/user/:userId', async (req, res, next) => {
+app.put('/api/shop/user/:userId', authMiddleware, async (req, res, next) => {
   console.log('put route /api/shop/user/:userId hit');
   try {
     // Destructure from the request body
@@ -242,7 +242,7 @@ app.put('/api/shop/user/:userId', async (req, res, next) => {
       where "userId"  = $2 and "productId" = $3
       returning *
     `;
-    const params = [quantity, userId, productId];
+    const params = [quantity, req.user?.userId, productId];
     const result = await db.query(sql, params);
     console.log(result.rows);
     const updatedCart = result.rows[0];
@@ -323,7 +323,7 @@ app.post('/api/shop/cart', async (req, res, next) => {
   console.log('/api/shop/cart hit');
   try {
     const { productId, quantity, userId } = req.body;
-    console.log('post userId', userId);
+    console.log('post productId', productId);
     if (!productId || !Number.isInteger(quantity) || quantity < 1) {
       throw new ClientError(
         400,
@@ -358,7 +358,7 @@ app.post('/api/shop/cart', async (req, res, next) => {
         VALUES ($1, $2, $3)
         RETURNING *
       `;
-      const insertParams = [userId, productId, quantity];
+      const insertParams = [req.user?.userId, productId, quantity];
       const insertResult = await db.query(insertSql, insertParams);
       return res.status(201).json(insertResult.rows[0]);
     }
@@ -367,7 +367,7 @@ app.post('/api/shop/cart', async (req, res, next) => {
   }
 });
 
-app.put('/api/shop/cart/:cartId', async (req, res, next) => {
+app.put('/api/shop/cart/:cartId', authMiddleware, async (req, res, next) => {
   console.log('put route /api/shop/cart/:cartId hit');
   try {
     // Destructure from the request body
@@ -390,10 +390,10 @@ app.put('/api/shop/cart/:cartId', async (req, res, next) => {
     const sql = `
       update "cartItems"
       set "quantity" = $1
-      where "cartId"  = $2 and "productId" = $3
+      where "cartId"  = $2 and "productId" = $3 and "userId" = $4
       returning *
     `;
-    const params = [quantity, cartId, productId];
+    const params = [quantity, cartId, productId, req.user?.userId];
     const result = await db.query(sql, params);
     console.log(result.rows);
     const updatedCart = result.rows[0];
@@ -414,7 +414,7 @@ app.delete('/api/shop/cart/:cartId', async (req, res, next) => {
       throw new ClientError(400, `Non-integer cartId: ${cartId}`);
     }
     const sql = `
-  delete from "cartItems" where "cartId" = $1
+  delete from "cartItems" where "cartId" = $1 and "userId" = $2
   returning *;
   `;
     const params = [cartId];

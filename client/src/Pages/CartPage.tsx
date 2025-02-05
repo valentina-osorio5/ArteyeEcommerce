@@ -25,16 +25,17 @@ export function CartPage() {
   const navigate = useNavigate();
   // const { user, token } = useAuth();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  // const [product, setProduct] = useState<any>(null);
+  const { addToCart } = useContext(ShoppingCartContext);
+  const userContext = useUser();
+  const [event, setEvent] = useState(true);
+
+  const user = userContext.user.userId;
+  console.log('user', user);
+
   // const [newProductId, setNewProductId] = useState<number>(0);
   // const [newQuantity, setNewQuantity] = useState<number>(1);
   // const { userId } = useParams<{ userId: string }>();
-  // const { addToCart } = useContext(ShoppingCartContext);
-
-  // const [product, setProduct] = useState<any>(null);
-
-  const userContext = useUser();
-  console.log(userContext.user.userId);
-  const user = userContext.user.userId;
 
   // If the user is not logged in, you may want to redirect them
   useEffect(() => {
@@ -47,7 +48,7 @@ export function CartPage() {
     if (user) {
       fetchCartItems();
     }
-  }, [user]);
+  }, [user, event]);
 
   async function fetchCartItems() {
     try {
@@ -68,96 +69,101 @@ export function CartPage() {
     return '$' + value.toFixed(2);
   }
 
-  // function handleAddToCart() {
-  //   if (!product) throw new Error('Product data missing');
+  function handleAddToCart(cartItem: CartItem) {
+    console.log('+ button pressed');
+    console.log(cartItem);
+    // if (!product) throw new Error('Product data missing');
 
-  //   // Call the context function to update local state (if needed)
-  //   addToCart(product);
-  // }
+    // // Call the context function to update local state (if needed)
+    const product = {
+      imageUrl: cartItem.imageUrl,
+      productId: cartItem.productId,
+      description: cartItem.description,
+      price: cartItem.price,
+      productName: cartItem.productName,
+    };
+    console.log(product);
+    addToCart(product);
 
-  // Create cart item
-  // async function handleAddToCart() {
-  //   if (newProductId < 1 || newQuantity < 1) {
-  //     return;
-  //   }
-  //   try {
-  //     const res = await fetch(`api/shop/user/${userId}`, {
-  //       method: 'POST',
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //         Authorization: `Bearer ${token}`,
-  //       },
-  //       body: JSON.stringify({
-  //         productId: newProductId,
-  //         quantity: newQuantity,
-  //         userId: UserContext.user.userId,
-  //       }),
-  //     });
-  //     if (!res.ok) {
-  //       console.error('Failed to add item');
-  //       return;
-  //     }
-  //     await res.json(); // the created cart item
-  //     // refresh the cart items
-  //     fetchCartItems();
-  //     setNewProductId(0);
-  //     setNewQuantity(1);
-  //   } catch (error) {
-  //     console.error('Error adding item:', error);
-  //   }
-  // }
+    // Now add the item to the cart in the database
+    async function postData() {
+      try {
+        const options = {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          // Send the productId and quantity.
+          // If you need to send a userId, include it here or have it added via authMiddleware on the server.
+          body: JSON.stringify({
+            productId: product.productId,
+            quantity: 1,
+            userId: user,
+            // or use the value from your context if you allow choosing quantity
+          }),
+        };
+        const res = await fetch('/api/shop/cart', options);
+        if (!res.ok) throw new Error(`Fetch error ${res.status}`);
+        const data = await res.json();
+        console.log('Cart updated:', data);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    postData();
+    setEvent(!event);
 
-  // Update cart item
-  // async function handleUpdateQuantity(cartItemId: number, newQty: number) {
-  //   if (newQty < 1) return;
-  //   try {
-  //     const res = await fetch(`api/shop/user/${userId}`, {
-  //       method: 'PUT',
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //         Authorization: `Bearer ${token}`,
-  //       },
-  //       body: JSON.stringify({ quantity: newQty }),
-  //     });
-  //     if (!res.ok) {
-  //       console.error('Failed to update');
-  //       return;
-  //     }
-  //     const updatedItem = await res.json();
-  //     // Update local state with the updated item
-  //     setCartItems((prev) =>
-  //       prev.map((item) =>
-  //         item.cartItemId === cartItemId
-  //           ? { ...item, quantity: updatedItem.quantity }
-  //           : item
-  //       )
-  //     );
-  //   } catch (error) {
-  //     console.error('Error updating cart item:', error);
-  //   }
-  // }
+    // Now add the item to the cart in the database
+    //   async function updateData() {
+    //     console.log('update data fired');
+    //     try {
+    //       const options = {
+    //         method: 'PUT',
+    //         headers: { 'Content-Type': 'application/json' },
+    //         // Send the productId and quantity.
+    //         // If you need to send a userId, include it here or have it added via authMiddleware on the server.
+    //         body: JSON.stringify({
+    //           productId: cartItem.productId,
+    //           quantity: 1,
+    //           userId: user,
+    //           // or use the value from your context if you allow choosing quantity
+    //         }),
+    //       };
+    //       const res = await fetch(`/api/shop/user/${user}`, options);
+    //       if (!res.ok) throw new Error(`Fetch error ${res.status}`);
+    //       const data = await res.json();
+    //       console.log('Cart updated:', data);
+    //     } catch (err) {
+    //       console.error(err);
+    //     }
+    //   }
+    //   updateData();
+  }
 
-  // // Delete cart item
-  // async function handleDeleteCartItem(cartItemId: number) {
-  //   try {
-  //     const res = await fetch(`/api/cart/${cartItemId}`, {
-  //       method: 'DELETE',
-  //       headers: {
-  //         Authorization: `Bearer ${token}`,
-  //       },
-  //     });
-  //     if (!res.ok) {
-  //       console.error('Failed to delete');
-  //       return;
-  //     }
-  //     // Filter out the deleted item
-  //     setCartItems((prev) =>
-  //       prev.filter((item) => item.cartItemId !== cartItemId)
-  //     );
-  //   } catch (error) {
-  //     console.error('Error deleting cart item:', error);
-  //   }
-  // }
+  async function deleteData() {
+    try {
+      const options = {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        // Send the productId and quantity.
+        // If you need to send a userId, include it here or have it added via authMiddleware on the server.
+        body: JSON.stringify({
+          productId: cartItem.productId,
+          quantity: 0,
+          userId: user,
+          // or use the value from your context if you allow choosing quantity
+        }),
+      };
+      const res = await fetch(`/api/shop/user/${user}`, options);
+      if (!res.ok) throw new Error(`Fetch error ${res.status}`);
+      const data = await res.json();
+      console.log('Cart updated:', data);
+    } catch (err) {
+      console.error(err);
+    }
+    deleteData();
+  }
 
   return (
     <>
@@ -191,7 +197,8 @@ export function CartPage() {
                 <p className="font-light">{cartItem.quantity}</p>
                 <button
                   style={{ backgroundColor: '#9381ef' }}
-                  className="px-1 py-.75 rounded">
+                  className="px-1 py-.75 rounded"
+                  onClick={() => handleAddToCart(cartItem)}>
                   +
                 </button>
                 <button className="text-sm underline">Remove from Cart</button>
@@ -219,70 +226,93 @@ export function CartPage() {
   );
 }
 
-{
-  /* <h2>My Cart</h2>
-      {!user ? (
-        <p>You must be signed in to view or modify your cart.</p>
-      ) : (
-        <>
-          <form
-          // onSubmit={handleAddToCart}
-          >
-            <h3>Add New Product to Cart</h3>
-            <div>
-              <label>Product ID:</label>
-              <input
-                type="number"
-                value={newProductId}
-                onChange={(e) => setNewProductId(Number(e.target.value))}
-              />
-            </div>
-            <div>
-              <label>Quantity:</label>
-              <input
-                type="number"
-                value={newQuantity}
-                onChange={(e) => setNewQuantity(Number(e.target.value))}
-              />
-            </div>
-            <button type="submit">Add to Cart</button>
-          </form>
+// function handleAddToCart() {
+//   if (!product) throw new Error('Product data missing');
 
-          <h3>Existing Cart Items</h3>
-          <ul>
-            {cartItems.map((item) => (
-              <li key={productId}>
-                <img
-                  src={imageUrl}
-                  alt={productName}
-                  style={{ width: '50px', marginRight: '1rem' }}
-                />
-                {productName} - ${item.price} x {item.quantity}
-                <button
-                // onClick={() =>
-                //   handleUpdateQuantity(item.cartItemId, item.quantity + 1)
-                // }
-                >
-                  +
-                </button>
-                <button
-                // onClick={() =>
-                //   handleUpdateQuantity(
-                //     item.cartItemId,
-                //     Math.max(1, item.quantity - 1)
-                //   )
-                // }
-                >
-                  -
-                </button>
-                <button
-                // onClick={() => handleDeleteCartItem(item.cartItemId)}
-                >
-                  Remove
-                </button>
-              </li>
-            ))}
-          </ul>
-        </>
-      )} */
-}
+//   // Call the context function to update local state (if needed)
+//   addToCart(product);
+// }
+
+// Create cart item
+// async function handleAddToCart() {
+//   if (newProductId < 1 || newQuantity < 1) {
+//     return;
+//   }
+//   try {
+//     const res = await fetch(`api/shop/user/${userId}`, {
+//       method: 'POST',
+//       headers: {
+//         'Content-Type': 'application/json',
+//         Authorization: `Bearer ${token}`,
+//       },
+//       body: JSON.stringify({
+//         productId: newProductId,
+//         quantity: newQuantity,
+//         userId: UserContext.user.userId,
+//       }),
+//     });
+//     if (!res.ok) {
+//       console.error('Failed to add item');
+//       return;
+//     }
+//     await res.json(); // the created cart item
+//     // refresh the cart items
+//     fetchCartItems();
+//     setNewProductId(0);
+//     setNewQuantity(1);
+//   } catch (error) {
+//     console.error('Error adding item:', error);
+//   }
+// }
+
+// Update cart item
+// async function handleUpdateQuantity(cartItemId: number, newQty: number) {
+//   if (newQty < 1) return;
+//   try {
+//     const res = await fetch(`api/shop/user/${userId}`, {
+//       method: 'PUT',
+//       headers: {
+//         'Content-Type': 'application/json',
+//         Authorization: `Bearer ${token}`,
+//       },
+//       body: JSON.stringify({ quantity: newQty }),
+//     });
+//     if (!res.ok) {
+//       console.error('Failed to update');
+//       return;
+//     }
+//     const updatedItem = await res.json();
+//     // Update local state with the updated item
+//     setCartItems((prev) =>
+//       prev.map((item) =>
+//         item.cartItemId === cartItemId
+//           ? { ...item, quantity: updatedItem.quantity }
+//           : item
+//       )
+//     );
+//   } catch (error) {
+//     console.error('Error updating cart item:', error);
+//   }
+// }
+
+// // Delete cart item
+// async function handleDeleteCartItem(cartItemId: number) {
+//   try {
+//     const res = await fetch(`/api/cart/${cartItemId}`, {
+//       method: 'DELETE',
+//       headers: {
+//         Authorization: `Bearer ${token}`,
+//       },
+//     });
+//     if (!res.ok) {
+//       console.error('Failed to delete');
+//       return;
+//     }
+//     // Filter out the deleted item
+//     setCartItems((prev) =>
+//       prev.filter((item) => item.cartItemId !== cartItemId)
+//     );
+//   } catch (error) {
+//     console.error('Error deleting cart item:', error);
+//   }
+// }
