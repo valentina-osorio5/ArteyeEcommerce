@@ -6,6 +6,12 @@ import { ShoppingCartContext } from '../components/ShoppingCartContext';
 // import { v4 as uuidv4 } from 'uuid';
 import { useUser } from '../components/useUser';
 
+type Cart = {
+  cartId: number;
+  productId: number;
+  quantity: number;
+};
+
 export function ProductDetails() {
   const { productId } = useParams<{ productId: string }>();
   const [product, setProduct] = useState<any>(null);
@@ -134,9 +140,3 @@ export function ProductDetails() {
     </div>
   );
 }
-
-type Cart = {
-  cartId: number;
-  productId: number;
-  quantity: number;
-};
