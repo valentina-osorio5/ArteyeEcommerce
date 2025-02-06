@@ -1,14 +1,13 @@
-import { useEffect, useState, useContext } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { ShoppingCartContext } from '../components/ShoppingCartContext';
+// import { ShoppingCartContext } from '../components/ShoppingCartContext';
 // import { v4 as uuidv4 } from 'uuid';
 import { useUser } from '../components/useUser';
 
 export function ProductDetails() {
   const { productId } = useParams<{ productId: string }>();
   const [product, setProduct] = useState<any>(null);
-  const { addToCart } = useContext(ShoppingCartContext);
-  console.log(addToCart);
+  // const { addToCart } = useContext(ShoppingCartContext);
   const userContext = useUser();
   console.log(userContext.user?.userId);
   const user = userContext.user?.userId;
@@ -41,7 +40,7 @@ export function ProductDetails() {
     if (!product) throw new Error('Product data missing');
 
     // Call the context function to update local state (if needed)
-    addToCart(product);
+    // addToCart(product);
     alert(`Added ${product.productName} to cart`);
 
     // Now add the item to the cart in the database
