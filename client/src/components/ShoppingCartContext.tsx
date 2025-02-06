@@ -48,7 +48,6 @@ export const ShoppingCartProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, [userId]);
 
-  // ✅ WORKING addToCart (syncs with database)
   const addToCart = async (product: Product) => {
     if (!userId) return;
 
@@ -73,7 +72,6 @@ export const ShoppingCartProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  // ✅ WORKING decrementCart (syncs with database)
   const decrementCart = async (product: Product) => {
     if (!userId) return;
 
