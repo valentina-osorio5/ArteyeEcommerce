@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import productsImage from '../assets/productsImage.png';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 // import { ProductDetails } from './ProductDetails';
-import { Header } from '../components/Header';
 
 export type Product = {
   productId: number;

@@ -1,9 +1,9 @@
 //current working version
 
-import { useEffect, useState, useContext } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../components/useUser';
-import { ShoppingCartContext } from '../components/ShoppingCartContext';
+// import { ShoppingCartContext } from '../components/ShoppingCartContext';
 export type User = {
   userId: number;
   username: string;
@@ -15,25 +15,16 @@ type CartItem = {
   quantity: number;
   addedAt: string;
   productName: string;
-  price: string;
+  price: number;
   imageUrl: string;
   description: string;
 };
-
-// type Cart = {
-// cartId: number,
-// imageUrl: string,
-// price: string,
-// productId: number,
-// productName: string,
-// quantity: number
-// }
 
 export function CartPage() {
   const navigate = useNavigate();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   console.log('cartItems from state', cartItems);
-  const { addToCart, decrementCart } = useContext(ShoppingCartContext);
+  // const { addToCart, decrementCart } = useContext(ShoppingCartContext);
   const userContext = useUser();
   const user = userContext.user?.userId;
 
