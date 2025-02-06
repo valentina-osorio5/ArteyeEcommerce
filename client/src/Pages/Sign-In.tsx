@@ -1,4 +1,4 @@
-import { type FormEvent, useState } from 'react';
+import { type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../components/useUser';
 import { Link } from 'react-router-dom';
@@ -37,53 +37,50 @@ export function SignIn() {
   }
 
   return (
-    <div className="container " style={{ fontFamily: 'Nova Round' }}>
-      <div className="">
-        <div className="align-center justify-self-center text-xl p-4">
-          <h1>Sign In</h1>
-        </div>
-      </div>
-      <form onSubmit={handleSubmit}>
-        <div className="">
-          <div className="">
-            <label className="justify-self-center">
-              Username:
-              <input
-                required
-                name="username"
-                type="text"
-                style={{ backgroundColor: '#F6F5FF' }}
-                // className="input-b-color text-padding input-b-radius purple-outline input-height margin-bottom-2 d-block width-100"
-              />
-            </label>
-            <label className="margin-bottom-1 d-block justify-self-center">
-              Password:
-              <input
-                required
-                name="password"
-                type="password"
-                style={{ backgroundColor: '#F6F5FF' }}
-                // className="input-b-color text-padding input-b-radius purple-outline input-height margin-bottom-2 d-block width-100"
-              />
-              <br></br>
-              <br></br>
-            </label>
-          </div>
-        </div>
+    <div
+      className="flex flex-col items-center justify-center"
+      style={{ fontFamily: 'Nova Round' }}>
+      <h1 className="text-xl">Sign In</h1>
+
+      <form
+        onSubmit={handleSubmit}
+        className="flex flex-col items-center space-y-4 bg-white p-6 rounded-lg shadow-md">
+        <label className="flex flex-col items-center w-full">
+          Username:
+          <input
+            required
+            name="username"
+            type="text"
+            className="w-64 p-2 mt-1 border border-gray-300 rounded"
+            style={{ backgroundColor: '#F6F5FF' }}
+          />
+        </label>
+
+        <label className="flex flex-col items-center w-full">
+          Password:
+          <input
+            required
+            name="password"
+            type="password"
+            className="w-64 p-2 mt-1 border border-gray-300 rounded"
+            style={{ backgroundColor: '#F6F5FF' }}
+          />
+        </label>
+
         <button
-          style={{ backgroundColor: '#eaf585' }}
-          className="flex justify-items-center justify-self-center border border-gray-300 rounded py-1 px-3 mx-10 mb-5 p-4">
+          type="submit"
+          style={{ backgroundColor: '#9381EF' }}
+          className="w-full py-2 border border-gray-300 rounded text-gray-800 font-semibold">
           Sign In
         </button>
-        <div className="justify-self-center">
-          <Link
-            className=" align-middle underline"
-            style={{ color: '#705DCC' }}
-            to="/sign-up">
-            Not registered? Sign up for an account
-          </Link>
-        </div>
       </form>
+
+      <Link
+        to="/sign-up"
+        style={{ color: '#705DCC' }}
+        className="mt-4 underline">
+        Not registered? Sign up for an account
+      </Link>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { type FormEvent, useState } from 'react';
+import { type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 /**
@@ -36,48 +36,42 @@ export function SignUpForm() {
   }
 
   return (
-    <div className="container" style={{ fontFamily: 'Nova Round' }}>
-      <div className="">
-        <div className="align-center justify-self-center text-xl p-4">
-          <h1>Register</h1>
-        </div>
-      </div>
-      <form onSubmit={handleSubmit}>
-        <div className="">
-          <div className="">
-            <label className="">
-              Username:
-              <input
-                required
-                name="username"
-                type="text"
-                style={{ backgroundColor: '#F6F5FF' }}
-                // className="input-b-color text-padding input-b-radius purple-outline input-height margin-bottom-2 d-block width-100"
-              />
-            </label>
-            <label className="margin-bottom-1 d-block">
-              Password:
-              <input
-                required
-                name="password"
-                type="password"
-                style={{ backgroundColor: '#F6F5FF' }}
-                // className="input-b-color text-padding input-b-radius purple-outline input-height margin-bottom-2 d-block width-100"
-              />
-            </label>
-            <br></br>
-            <br></br>
-          </div>
-        </div>
-        <div className="row">
-          <div className="column-full d-flex justify-between">
-            <button
-              style={{ backgroundColor: '#eaf585' }}
-              className="flex justify-items-center justify-self-center border border-gray-300 rounded py-1 px-3 mx-10 mb-5 p-4">
-              Register
-            </button>
-          </div>
-        </div>
+    <div
+      className="flex flex-col items-center justify-center"
+      style={{ fontFamily: 'Nova Round' }}>
+      <h1 className="text-xl p-4">Register</h1>
+
+      <form
+        onSubmit={handleSubmit}
+        className="flex flex-col items-center bg-white p-6 rounded-lg shadow-md space-y-4">
+        <label className="flex flex-col items-center w-full">
+          Username:
+          <input
+            required
+            name="username"
+            type="text"
+            className="w-64 p-2 mt-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-500"
+            style={{ backgroundColor: '#F6F5FF' }}
+          />
+        </label>
+
+        <label className="flex flex-col items-center w-full">
+          Password:
+          <input
+            required
+            name="password"
+            type="password"
+            className="w-64 p-2 mt-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-500"
+            style={{ backgroundColor: '#F6F5FF' }}
+          />
+        </label>
+
+        <button
+          type="submit"
+          style={{ backgroundColor: '#9381EF' }}
+          className="w-full py-2 border border-gray-300 rounded text-gray-800 font-semibold">
+          Register
+        </button>
       </form>
     </div>
   );

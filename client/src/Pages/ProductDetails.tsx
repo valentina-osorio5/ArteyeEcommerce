@@ -1,23 +1,13 @@
-import { Link, UNSAFE_NavigationContext } from 'react-router-dom';
 import { useEffect, useState, useContext } from 'react';
-import { Product } from './ProductsPage';
 import { useParams } from 'react-router-dom';
 import { ShoppingCartContext } from '../components/ShoppingCartContext';
 // import { v4 as uuidv4 } from 'uuid';
 import { useUser } from '../components/useUser';
 
-type Cart = {
-  cartId: number;
-  productId: number;
-  quantity: number;
-};
-
 export function ProductDetails() {
   const { productId } = useParams<{ productId: string }>();
   const [product, setProduct] = useState<any>(null);
   const { addToCart } = useContext(ShoppingCartContext);
-  const context = useContext(ShoppingCartContext);
-  const numberOfItems = context.cart.length;
   console.log(addToCart);
   const userContext = useUser();
   console.log(userContext.user?.userId);
@@ -52,6 +42,7 @@ export function ProductDetails() {
 
     // Call the context function to update local state (if needed)
     addToCart(product);
+    alert(`Added ${product.productName} to cart`);
 
     // Now add the item to the cart in the database
     async function postData() {
