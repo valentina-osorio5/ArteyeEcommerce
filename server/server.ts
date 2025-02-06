@@ -144,6 +144,7 @@ app.get('/api/shop/user/:userId', async (req, res, next) => {
     from "cartItems"
     join "products" using ("productId")
     where "userId" = $1
+    order by "productId"
     `;
     // on line 146, join to "products" where "productId" = $2
     // might need to eventually refine what we're selecting instead of all,

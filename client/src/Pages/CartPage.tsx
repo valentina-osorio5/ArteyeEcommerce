@@ -19,6 +19,16 @@ type CartItem = {
   imageUrl: string;
   description: string;
 };
+
+// type Cart = {
+// cartId: number,
+// imageUrl: string,
+// price: string,
+// productId: number,
+// productName: string,
+// quantity: number
+// }
+
 export function CartPage() {
   const navigate = useNavigate();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
@@ -54,6 +64,7 @@ export function CartPage() {
     return '$' + value.toFixed(2);
   }
   async function handleAddToCart(cartItem: CartItem) {
+    // await addToCart(cartItem);
     console.log('+ button pressed');
     try {
       const options = {
@@ -121,6 +132,12 @@ export function CartPage() {
     }
   }
 
+  function getSubtotal(cartItems: CartItem[]): number {
+    return cartItems.reduce((total, cartItem) => {
+      return total + cartItem.price * cartItem.quantity;
+    }, 0);
+  }
+
   return (
     <>
       <div className="container flex">
@@ -167,14 +184,21 @@ export function CartPage() {
         </div>
         <div
           style={{ fontFamily: 'Nova Round' }}
-          className="w-2/5 border-b-1 0 ml-4 p-4 border-2">
-          <h2 className="text-xl mb-2">Order Summary</h2>
-          <h3 className="mb-2">Subtotal </h3>
-          <p className="text-xs">Shipping & taxes calculated at checkout</p>
+          className="w-2/5 border-b-1 0 ml-4 p-4 border-2 max-h-fit">
+          <h2 className="text-xl mb-2 justify-self-center">Order Summary</h2>
+          <h3 className="mb-2 pt-4">
+            Cart Subtotal {toDollars(getSubtotal(cartItems))}
+          </h3>
+          <p className="text-xs border-b-1 pt-3">
+            Shipping & taxes calculated at checkout
+          </p>
+          <h3 className="mb-2 pt-6">
+            Estimated Total {toDollars(getSubtotal(cartItems))}
+          </h3>
           <br />
           <button
             style={{ backgroundColor: '#eaf585' }}
-            className="flex justify-items-center justify-self-center border border-gray-300 rounded py-1 px-3 mx-10 mb-5">
+            className="flex justify-items-center justify-self-center border border-gray-300 rounded py-1 px-3 mx-10 mb-5 text-sm">
             Proceed to checkout
           </button>
         </div>
