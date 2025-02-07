@@ -332,7 +332,6 @@ app.post('/api/shop/cart', async (req, res, next) => {
         'productId must be provided and quantity must be a positive integer'
       );
     }
-    // First, see if an entry for this product (for this user) already exists.
     const checkSql = `
       select *
       from "cartItems"
@@ -340,10 +339,8 @@ app.post('/api/shop/cart', async (req, res, next) => {
     `;
     const checkParams = [productId, userId];
     const checkResult = await db.query(checkSql, checkParams);
-    // console.log(checkResult);
     if (checkResult.rows.length > 0) {
       console.log('here');
-      // If the product already exists in the cart, update the quantity.
       const existingItem = checkResult.rows[0];
       const updateSql = `
         update "cartItems"
@@ -356,7 +353,6 @@ app.post('/api/shop/cart', async (req, res, next) => {
       return res.status(200).json(updateResult.rows[0]);
     } else {
       console.log('else block');
-      // Otherwise, insert a new row.
       const insertSql = `
         insert into "cartItems" ("userId", "productId", "quantity")
         values ($1, $2, $3)
@@ -371,56 +367,6 @@ app.post('/api/shop/cart', async (req, res, next) => {
   }
 });
 
-// app.put('/api/shop/cart', async (req, res, next) => {
-//   console.log('put /api/shop/cart hit');
-//   try {
-//     const { productId, quantity, userId } = req.body;
-//     console.log('put productId', productId);
-//     if (!productId || !Number.isInteger(quantity) || quantity < 1) {
-//       throw new ClientError(
-//         400,
-//         'productId must be provided and quantity must be a positive integer'
-//       );
-//     }
-//     // First, see if an entry for this product (for this user) already exists.
-//     const checkSql = `
-//       select *
-//       from "cartItems"
-//       where "productId" = $1 and "userId" = $2
-//     `;
-//     const checkParams = [productId, userId];
-//     const checkResult = await db.query(checkSql, checkParams);
-//     console.log(checkResult);
-//     if (checkResult.rows.length > 0) {
-//       // If the product already exists in the cart, update the quantity.
-//       const existingItem = checkResult.rows[0];
-//       const updateSql = `
-//         update "cartItems"
-//         set "quantity" = $1
-//         where "cartId" = $2
-//         returning *
-//       `;
-//       console.log('quantity after updatesql', quantity);
-//       const updateParams = [quantity, existingItem.cartId];
-//       const updateResult = await db.query(updateSql, updateParams);
-//       return res.status(200).json(updateResult.rows[0]);
-//     } else {
-//       // Otherwise, insert a new row.
-//       const insertSql = `
-//         insert into "cartItems" ("userId", "productId", "quantity")
-//         values ($1, $2, $3)
-//         returning *
-//       `;
-//       console.log('quantity after insertSql', quantity);
-//       const insertParams = [req.user?.userId, productId, quantity];
-//       const insertResult = await db.query(insertSql, insertParams);
-//       return res.status(201).json(insertResult.rows[0]);
-//     }
-//   } catch (err) {
-//     next(err);
-//   }
-// });
-
 app.put('/api/shop/cart', async (req, res, next) => {
   console.log('PUT /api/shop/cart hit');
   try {
@@ -431,11 +377,10 @@ app.put('/api/shop/cart', async (req, res, next) => {
         'Invalid productId or quantity must be at least 1'
       );
     }
-    // Check if the product exists in the user's cart
     const checkSql = `
-      SELECT "cartId", "quantity"
-      FROM "cartItems"
-      WHERE "productId" = $1 AND "userId" = $2
+      select "cartId", "quantity"
+      from "cartItems"
+      where "productId" = $1 AND "userId" = $2
     `;
     const checkParams = [productId, userId];
     const checkResult = await db.query(checkSql, checkParams);
@@ -446,14 +391,12 @@ app.put('/api/shop/cart', async (req, res, next) => {
       );
     }
     const existingItem = checkResult.rows[0];
-    // Ensure quantity never goes below 1
     const newQuantity = Math.max(quantity, 1);
-    // Update the cart item with the new quantity
     const updateSql = `
-      UPDATE "cartItems"
-      SET "quantity" = $1
-      WHERE "cartId" = $2
-      RETURNING *;
+      update "cartItems"
+      set "quantity" = $1
+      where "cartId" = $2
+      returning *;
     `;
     const updateParams = [newQuantity, existingItem.cartId];
     const updateResult = await db.query(updateSql, updateParams);

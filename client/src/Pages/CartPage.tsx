@@ -95,7 +95,7 @@ export function CartPage() {
       if (!res.ok) throw new Error(`Fetch error ${res.status}`);
       await res.json();
       console.log('cart decremented');
-      await fetchCartItems(); // Ensure UI updates
+      await fetchCartItems();
     } catch (err) {
       console.error(err);
     }
@@ -115,7 +115,7 @@ export function CartPage() {
       if (!res.ok) throw new Error(`Fetch error ${res.status}`);
       await res.json();
       console.log('cart item removed');
-      await fetchCartItems(); // Ensure UI updates
+      await fetchCartItems();
     } catch (err) {
       console.error(err);
     }
