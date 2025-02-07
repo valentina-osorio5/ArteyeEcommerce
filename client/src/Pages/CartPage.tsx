@@ -55,7 +55,6 @@ export function CartPage() {
     return '$' + value.toFixed(2);
   }
   async function handleAddToCart(cartItem: CartItem) {
-    // await addToCart(cartItem);
     console.log('+ button pressed');
     try {
       const options = {
@@ -72,7 +71,6 @@ export function CartPage() {
       if (!res.ok) throw new Error(`Fetch error ${res.status}`);
       await res.json();
       await fetchCartItems();
-      // Ensure UI updates
     } catch (err) {
       console.error(err);
     }
