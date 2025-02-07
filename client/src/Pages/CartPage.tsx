@@ -137,7 +137,9 @@ export function CartPage() {
             Your Shopping Cart
           </h1>
           {cartItems.map((cartItem) => (
-            <div key={cartItem.productId} className="mb-4">
+            <div
+              key={cartItem.productId}
+              className="mb-4 align-center justify-self-center">
               <h2 className="font-bold">{cartItem.productName}</h2>
               <p className="font-light text-sm">
                 Item Price: ${cartItem.price}
@@ -175,7 +177,8 @@ export function CartPage() {
         </div>
         <div
           style={{ fontFamily: 'Nova Round' }}
-          className="w-2/5 border-b-1 0 ml-4 p-4 border-2 max-h-fit">
+          className="w-2/5 border-b-1 0 ml-4 p-4 border-2 max-h-fit"
+          mr-4>
           <h2 className="text-xl mb-2 justify-self-center">Order Summary</h2>
           <h3 className="mb-2 pt-4">
             Cart Subtotal {toDollars(getSubtotal(cartItems))}
