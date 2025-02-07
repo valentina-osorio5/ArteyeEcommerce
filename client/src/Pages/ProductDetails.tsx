@@ -72,7 +72,9 @@ export function ProductDetails() {
   }
 
   return (
-    <div style={{ fontFamily: 'Nova Round' }} className="mx-3">
+    <div
+      style={{ fontFamily: 'Nova Round' }}
+      className="align-center justify-self-center mx-3 max-w-4xl ">
       {product && (
         <div>
           <h2 className="align-center justify-self-center text-xl">
