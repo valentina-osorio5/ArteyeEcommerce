@@ -131,13 +131,11 @@ export function CartPage() {
     <>
       <div className="container flex">
         <div style={{ fontFamily: 'Nova Round' }} className="w-3/5 ml-4 p-4">
-          <h1 className="align-center justify-self-center text-2xl mb-2">
+          <h1 className="align-center justify-self-center text-3xl mb-2">
             Your Shopping Cart
           </h1>
           {cartItems.map((cartItem) => (
-            <div
-              key={cartItem.productId}
-              className="mb-4 align-center justify-self-center">
+            <div key={cartItem.productId} className="mb-4 justify-items-center">
               <h2 className="font-bold">{cartItem.productName}</h2>
               <p className="font-light text-sm">
                 Item Price: ${cartItem.price}
