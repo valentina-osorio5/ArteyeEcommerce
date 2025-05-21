@@ -37,6 +37,7 @@ export function ProductDetails() {
   }, [productId]);
 
   function handleAddToCart() {
+    // if (!user) throw new Error('user not signed in, please sign in or sign up to create account )
     if (!product) throw new Error('Product data missing');
 
     // Call the context function to update local state (if needed)
