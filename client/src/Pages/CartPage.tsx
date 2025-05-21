@@ -76,9 +76,12 @@ export function CartPage() {
     }
   }
   async function handleDecrementCart(cartItem: CartItem) {
-    console.log('- button pressed');
+    // console.log('- button pressed');
     if (cartItem.quantity <= 1) {
-      console.log('Quantity is already at 1, cannot decrement further.');
+      // call handle delete
+      // console.log('Quantity is already at 1, cannot decrement further.');
+      handleDelete(cartItem);
+
       return;
     }
     try {
@@ -134,42 +137,55 @@ export function CartPage() {
           <h1 className="align-center justify-self-center text-3xl mb-2">
             Your Shopping Cart
           </h1>
-          {cartItems.map((cartItem) => (
-            <div key={cartItem.productId} className="mb-4 justify-items-center">
-              <h2 className="font-bold">{cartItem.productName}</h2>
-              <p className="font-light text-sm">
-                Item Price: ${cartItem.price}
-              </p>
-              <p className="font-light text-sm">
-                Item Total: {toDollars(cartItem.price * cartItem.quantity)}
-              </p>
-              <img
-                src={cartItem.imageUrl}
-                alt={cartItem.productName}
-                style={{ width: '125px' }}
-              />
-              <div className="flex items-center space-x-2 mt-2">
-                <button
-                  style={{ backgroundColor: '#9381ef' }}
-                  className="px-1 py-.75 rounded"
-                  onClick={() => handleDecrementCart(cartItem)}>
-                  -
-                </button>
-                <p className="font-light">{cartItem.quantity}</p>
-                <button
-                  style={{ backgroundColor: '#9381ef' }}
-                  className="px-1 py-.75 rounded"
-                  onClick={() => handleAddToCart(cartItem)}>
-                  +
-                </button>
-                <button
-                  className="text-sm underline"
-                  onClick={() => handleDelete(cartItem)}>
-                  Remove from Cart
-                </button>
+          {/* This is where the no items in cart text would be */}
+          {/* Would it be something like if !(cartItem){div className="mb-4 justify-items-center">
+              <h2 className="font-bold">Your cart is empty.</h2>} */}
+
+          {cartItems.length === 0 ? (
+            <h2 className="mb-4 align-center justify-self-center font-bold pt-1.5 mb-4 text-xl">
+              Your cart is empty.
+            </h2>
+          ) : (
+            cartItems.map((cartItem) => (
+              <div
+                key={cartItem.productId}
+                className="mb-4 justify-items-center">
+                <h2 className="font-bold">{cartItem.productName}</h2>
+                <p className="font-light text-sm">
+                  Item Price: ${cartItem.price}
+                </p>
+                <p className="font-light text-sm">
+                  Item Total: {toDollars(cartItem.price * cartItem.quantity)}
+                </p>
+                <img
+                  src={cartItem.imageUrl}
+                  alt={cartItem.productName}
+                  style={{ width: '125px' }}
+                />
+                <div className="flex items-center space-x-2 mt-2">
+                  <button
+                    style={{ backgroundColor: '#9381ef' }}
+                    className="px-1 py-.75 rounded"
+                    onClick={() => handleDecrementCart(cartItem)}>
+                    -
+                  </button>
+                  <p className="font-light">{cartItem.quantity}</p>
+                  <button
+                    style={{ backgroundColor: '#9381ef' }}
+                    className="px-1 py-.75 rounded"
+                    onClick={() => handleAddToCart(cartItem)}>
+                    +
+                  </button>
+                  <button
+                    className="text-sm underline"
+                    onClick={() => handleDelete(cartItem)}>
+                    Remove from Cart
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+            //or would it be here? (if)
+          )}
         </div>
         <div
           style={{ fontFamily: 'Nova Round' }}
