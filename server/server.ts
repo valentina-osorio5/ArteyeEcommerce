@@ -7,6 +7,7 @@ import { nextTick } from 'process';
 import { redirect } from 'react-router-dom';
 import argon2, { hash } from 'argon2';
 import jwt from 'jsonwebtoken';
+import Stripe from 'stripe';
 
 type User = {
   userId: number;
@@ -47,6 +48,40 @@ app.use(express.json());
 
 const hashKey = process.env.TOKEN_SECRET;
 if (!hashKey) throw new Error('TOKEN_SECRET not found in .env');
+
+const stripeKey = process.env.STRIPE_SECRET_KEY;
+if (!stripeKey) throw new Error('Missing Stripe Key');
+
+const stripe = new Stripe(
+  stripeKey
+  // { apiVersion: '2023-10-16' }
+);
+
+// Endpoint to create a Checkout Session
+app.post('/create-checkout-session', async (req, res) => {
+  const session = await stripe.checkout.sessions.create({
+    // Configure your Checkout Session here
+    // the below is from stripe documentation
+    //           currency: "EUR",
+    //       amount: 1999,
+    //       automatic_payment_methods: { enabled: true },
+    //     });
+    //     // Send publishable key and PaymentIntent details to client
+    //     res.send({
+    //       clientSecret: paymentIntent.client_secret,
+    //     });
+    //   } catch (e) {
+    //     return res.status(400).send({
+    //       error: {
+    //         message: e.message,
+    //       },
+    //     });
+    //   }
+    // });
+  });
+
+  res.json({ checkoutSessionClientSecret: session.client_secret });
+});
 
 // Create paths for static directories
 const reactStaticDir = new URL('../client/dist', import.meta.url).pathname;
