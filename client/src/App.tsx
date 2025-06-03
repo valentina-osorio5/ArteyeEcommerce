@@ -9,6 +9,7 @@ import { UserProvider } from './components/UserContext';
 import { SignIn } from './Pages/Sign-In';
 import { SignUpForm } from './Pages/Sign-Up';
 import { CartPage } from './Pages/CartPage';
+import { CheckoutProvider } from './components/CheckoutProvider';
 
 export default function App() {
   return (
@@ -21,6 +22,7 @@ export default function App() {
           <Route path="/cart" element={<CartPage />} />
           <Route path="/sign-in" element={<SignIn />} />
           <Route path="/sign-up" element={<SignUpForm />} />
+          {/* <Route path="/check-out" element={<CheckoutProvider/>}/> */}
         </Routes>
       </UserProvider>
     </>
